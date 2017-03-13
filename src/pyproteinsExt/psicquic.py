@@ -1,4 +1,3 @@
-#import bioservices
 import urllib2
 from bs4 import BeautifulSoup
 import re
@@ -21,10 +20,6 @@ PSQ_FIELDS= ["idA", "idB", "altA", "altB", "aliasA", "aliasB", "interactionDetec
 class OLS():
 
     def __init__(self, ontology="mi"):
-        #self.cOntology = "MI"
-        #self.api = bioservices.WSDLService("OLS", "http://www.ebi.ac.uk/ontology-lookup/OntologyQuery.wsdl")
-        #self.api = bioservices.WSDLService("OLS", "http://www.ebi.ac.uk/ols/v2/OntologyQuery.wsdl")
-        #if ontology: self.cOntology = ontology
 
         self.cOntology = ontology
         self.restApi = 'http://www.ebi.ac.uk/ols/api/ontologies/' + self.cOntology + '/'

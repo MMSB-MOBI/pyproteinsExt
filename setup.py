@@ -15,7 +15,7 @@ from setuptools import setup
 
 setup(
   name = 'pyproteinsExt',
-  version = '0.30',
+  version = '0.31',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
   author = 'Guillaume Launay',
@@ -30,7 +30,7 @@ setup(
   keywords = ['protein', 'sequence'], # arbitrary keywords
   classifiers = [],
   install_requires=[
-          'pyproteins', 'networkx', 'bs4', 'biopython', 'bioservices'
+          'pyproteins', 'networkx', 'bs4', 'biopython'
       ],
    package_data = {
    'pyproteinsExt': ['external/submitPsipred.sh','static/psicquicRegistryDefault.xml']
