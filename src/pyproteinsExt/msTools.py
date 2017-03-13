@@ -1,59 +1,131 @@
 import re
-import Uniprot
+import pyproteinsExt.uniprot
 import copy
 import math
-from Matrisome import Matrisome
+import pyproteinsExt.matrisome
 from Queue import Queue
 from threading import Thread
 from collections import OrderedDict
 
 
-Matrisome = Matrisome()
-uniprotEntrySet = Uniprot.EntrySet()
+uniprotEntrySet = pyproteinsExt.uniprot.EntrySet()
 '''
 Entry object attributes are defined as xls columns headers found in interact files
 
 '''
 
 
-def testEntry(uniProtObj):
-    goWords = [
-        { 'id' : 'GO:0016020', 'txt' : 'membrane'},
-        { 'id' : 'GO:0005578', 'txt' : 'proteinaceous extracellular matrix'},
-        { 'id' : 'GO:0005201', 'txt' : 'extracellular matrix structural constituent'},
-        { 'id' : 'GO:0005604', 'txt' : 'basement membrane'},
-        { 'id' : 'GO:0031012', 'txt' : 'extracellular matrix'},
-        { 'id' : 'GO:0005605', 'txt' : 'basal lamina'},
-        { 'id' : 'GO:0005576', 'txt' : 'extracellular region'},
-        { 'id' : 'GO:0005615', 'txt' : 'extracellular space'}
-    ]
-    keyWords = [{ 'id' : 'KW-0472', 'txt' : 'Membrane'},
-                { 'id' : 'KW-0272', 'txt' : 'Extracellular matrix'},
-                { 'id' : 'KW-0084', 'txt' : 'Basement membrane'},
-                { 'id' : 'KW-0964', 'txt' : 'Secreted'},
-                { 'id' : 'KW-0339', 'txt' : 'Growth factor'},
-                { 'id' : 'KW-0202', 'txt' : 'Cytokine'}
-    ]
-    badGoWords = [
-        { 'id' : 'GO:0031965', 'txt' : 'nuclear membrane' },
-        { 'id' : 'GO:0005634', 'txt' : 'nucleus' }
-    ]
+
+# This routine test a uniprot entry vesus an annotation dict
+# The annotation dict which specify annotation that must or must not be present in
+# the uniprot entry
+# The returned tuple features a boolean and the set of specified annotation term which were
+# found in the uniprot object
+
+# Input example, from http://localhost:8888/notebooks/Secretomic/Nterminom%20annotations.ipynb
+# ECMannotator = {
+#    'tag' : "ECM",
+#        'positiveAnnotationList' : [
+#        { 'name' : 'goWords',
+#          'target' : 'GO',
+#          'content' : [
+#            { 'id' : 'GO:0016020', 'txt' : 'membrane'},
+#            { 'id' : 'GO:0005578', 'txt' : 'proteinaceous extracellular matrix' },
+#        ]
+#      },
+#        { 'name' : 'keyWords',
+#          'target' : 'KW',
+#          'content' : [
+#                { 'id' : 'KW-0472', 'txt' : 'Membrane'},
+#                { 'id' : 'KW-0272', 'txt' : 'Extracellular matrix'}
+#        ],
+#        }
+#        ],
+#    'negativeAnnotationList' : [
+#        { 'name' : 'badGoWords',
+#          'target' : 'GO',
+#          'content' : [
+#            { 'id' : 'GO:0031965', 'txt' : 'nuclear membrane' },
+#            { 'id' : 'GO:0005634', 'txt' : 'nucleus' }
+#        ]
+#        }
+#        ]
+
+def testEntry(uniProtObj, annotator):
+    def stringify(term):
+        #return term['id'] + '(' + term['txt'].replace('(', '\(').replace(')', '\)') + ')'
+        return term['id'] + '(' + term['txt'] + ')'
+
+    data = {
+        "positiveAnnotationList" : [],
+        "negativeAnnotationList" : []
+        }
+
+    entryBool = False
+    for annotationType in ['positiveAnnotationList', 'negativeAnnotationList']:
+        if annotationType in annotator:
+            for annotation in annotator[annotationType]:
+                _testBoundMethod = None
+                if annotation['target'] == 'GO':
+                    _testBoundMethod = uniProtObj.hasGO
+                elif annotation['target'] == 'KW':
+                    _testBoundMethod = uniProtObj.hasKW
+                elif annotation['target'] == 'MIM':
+                    _testBoundMethod = uniProtObj.hasMIM
+                elif annotation['target'] == 'DI':
+                    _testBoundMethod = uniProtObj.hasDI
+                elif annotation['target'] == 'ORPHA':
+                    _testBoundMethod = uniProtObj.hasORPHA
+                else:
+                    raise ValueError("Unknown annotation to test on uniprot Entry " + str(annotation['target']))
+
+                d = { 'name' : annotation['name'], 'matches' : [] }
+                for term in annotation['content']:
+                    if _testBoundMethod(term['id']):
+                        d['matches'].append(term)
+                        if annotationType == 'positiveAnnotationList':
+                            entryBool = True
+                        else:
+                            entryBool = False
+                data[annotationType].append(d)
+    return (entryBool, data)
+
+
+def testEntryOLD(uniProtObj, **kwargs):
+
+    def stringify(term):
+        #return term['id'] + '(' + term['txt'].replace('(', '\(').replace(')', '\)') + ')'
+        return term['id'] + '(' + term['txt'] + ')'
+
+    if 'goWords' in kwargs :
+        goWords = kwargs['goWords']
+    else:
+        goWords = []
+    if 'keyWords' in kwargs :
+        keyWords = kwargs['keyWords']
+    else:
+        keyWords = []
+    if 'badGoWords' in kwargs :
+        badGoWords = kwargs['badGoWords']
+    else:
+        badGoWords= []
+
 
     badGoFound = []
     for goWord in badGoWords:
         if uniProtObj.hasGO(goWord['id']):
             #raise WordException(word = goWord['txt'])
-            badGoFound.append(goWord['txt'])
+            badGoFound.append( stringify(goWord) )
 
     goFound = []
     for goWord in goWords:
         if uniProtObj.hasGO(goWord['id']):
-            goFound.append(goWord['txt'])
+            goFound.append( stringify(goWord) )
 
     kwFound = []
     for kw in keyWords:
-        if uniProtObj.hasKW(kw['txt']):
-            kwFound.append(kw['txt'])
+        if uniProtObj.hasKW(kw['id']):
+            kwFound.append( stringify(kw) )
 
     if not kwFound and not goFound and not badGoFound : return None
     return {'goMatches' : goFound, 'kwMatches' : kwFound, 'badGoMatches' : badGoFound }
@@ -92,6 +164,7 @@ class EntrySet:
             #self.keymap = copy.deepcopy(entrySet.keymap)
             #self.data = copy.deepcopy(entrySet.data)
             self.keymap = copy.deepcopy(entrySet.keymap)
+
             for d in entrySet:
                 self.add( copy.deepcopy(d) )
             return
@@ -238,7 +311,6 @@ class EntrySet:
 
         return eSet
 
-
     def __eq__(a, b):
         status =  True if len (set(a.data.keys()) & set(b.data.keys())) == 0 else False
         return status
@@ -273,6 +345,35 @@ class EntrySet:
             return self.data[hash(entry)]
         return None
 
+
+    def _threadAnnotationPool(self, termTypes):
+        num_worker_threads = 10
+        def worker():
+            while True:
+                e = q.get()
+                for term in termTypes:
+                    if isinstance(term, dict):
+                        e.isCustom(term, annot=True)
+                    elif isinstance(term, basestring):
+                        if term is "matrisome":
+                            e.isMatrisome(annot=True)
+                #e._boundUniprot()
+
+                q.task_done()
+
+        q = Queue()
+        for i in range(num_worker_threads):
+            t = Thread(target=worker)
+            t.daemon = True
+            t.start()
+
+        for e in self:
+            q.put(e)
+
+        print '*** Main thread waiting --annotation--' + str(q.qsize())
+        q.join()
+        print '*** Done'
+
     def _threadPool(self):
         num_worker_threads = 10
         def worker():
@@ -298,23 +399,39 @@ class EntrySet:
 
     # Here we modify the content of each entry, typically b4 tsv dump
     # Carefull, siblings are not modified
-    def enrich(self, termTypes):
-        if not termTypes:
-            raise ValueError("single term or list of enrichment type required")
+    # TO MOD
+    def enrich(self, enrichersList):
 
-        if "ECM" in termTypes:
-                self.keymap.extend(['Matrisome', 'ECMkwMatches', 'ECMgoMatches','ECMbadGoMatches'])
-        elif "matrisome" in termTypes:
-              self.keymap.append("Matrisome")
+        for enricher in enrichersList:
+            if isinstance(enricher, basestring):
+                if enricher is "matrisome" and "matrisomeTerm" not in self.keymap:
+                    self.keymap.append("matrisomeTerm")
+                else :
+                    raise ValueError("Can't find an enrichment procedude for following type \"" + enricher + "\"")
 
-        for e in self:
-            if "ECM" in termTypes:
-                e.isECM(annot=True)
-            elif "matrisome" in termTypes:
-                e.isMatrisome(annot=True)
+            elif isinstance(enricher, dict):
+                if not 'tag' in enricher:
+                    raise ValueError( 'tag key is required to perform custom enrichment')
+                for annotationType in ['positiveAnnotationList', 'negativeAnnotationList']:
+                    for termsList in enricher[annotationType]:
+                        self.keymap.append(enricher['tag'] + '_' + termsList['name'])
+                        #tag = annotationType[0] + '_' + termsList['target']
+                        #if tag not in self.keymap:
 
 
 
+# Trying parrallel
+        self._threadAnnotationPool(enrichersList)
+
+#        for e in self:
+#            for term in termTypes:
+#                if isinstance(term, dict):
+#                    e.isCustom(term, annot=True)
+#                elif isinstance(term, basestring):
+#                    if term is "matrisome":
+#                        e.isMatrisome(annot=True)
+
+    # Annotated as ECM should be replaced by custom-like
     def filter(self, verbose=True, cleavageSite=None, annotatedAs=None, signalOver=None, signalBelow=None, sigmaFoldOver=None, sigmaFoldBelow=None, evalType="average", siblingsAbove=None):
         eSet = EntrySet(data = {}, keymap=copy.deepcopy(self.keymap))
 
@@ -327,13 +444,21 @@ class EntrySet:
             for datum in self:
                 if datum.isMatrisome():
                     eSet.add(copy.deepcopy(datum))
-        elif annotatedAs is "ECM":
+        #elif annotatedAs is "ECM":
+        #    self._threadPool()
+        #    for datum in self:
+        #        if datum.isECM():
+        #            if verbose:
+        #                print datum.getRefSeq()
+        #            eSet.add(copy.deepcopy(datum))
+        elif isinstance(annotatedAs, dict):
             self._threadPool()
             for datum in self:
-                if datum.isECM():
+                if datum.isCustom(annotatedAs):
                     if verbose:
                         print datum.getRefSeq()
                     eSet.add(copy.deepcopy(datum))
+
         elif signalOver or signalBelow or sigmaFoldOver or sigmaFoldBelow:
             if not 'nterm_rat_1' in self.keymap:
                 raise ValueError('no terminal ratio to assess signal')
@@ -405,12 +530,12 @@ class EntrySet:
 
     def tsvDump(self, enrichWith=None, deep=False, fileName=None): ## union case
         if enrichWith:
-            term = []
-            if isinstance(enrichWith, basestring):
-                term.append(enrichWith)
-            elif isinstance(enrichWith, list):
-                term.extend(enrichWith)
-            self.enrich(term)
+        #    term = []
+        #    if isinstance(enrichWith, basestring):
+        #        term.append(enrichWith)
+        #    elif isinstance(enrichWith, dict):
+        #        term.extend(enrichWith)
+            self.enrich(enrichWith)
 
         asString = ("\t").join(self.keymap) + "\n"
         for e in self:
@@ -456,6 +581,12 @@ class EntrySet:
             d['nAminoGrp'] = d['nAminoGrp'] + nAminoGrp
         return d
 
+    def bindAnnotation(self, **kwargs):
+        if 'matrisome' in kwargs:
+            for e in self:
+                e.bindMatrisome(kwargs['matrisome'])
+
+
 '''
 
 '''
@@ -480,6 +611,8 @@ class Entry:
 #    def __cmp__(self):
 #        return object.__cmp__(self)
 
+    def bindMatrisome(self, matrisomeObj):
+        self.matrisome = matrisomeObj
 
     @property
     def uniprot(self):
@@ -591,10 +724,12 @@ class Entry:
     def _boundUniprot(self):
         if not self._uniprotBound:
             id = self['uniprotID']
+
             if not id:
                 return False
             try :
-                self._uniprotBound = uniprotEntrySet.get(id)#Uniprot.Entry(id)
+                notIsoform_id = pyproteinsExt.uniprot.strip(id)
+                self._uniprotBound = uniprotEntrySet.get(notIsoform_id)#Uniprot.Entry(id)
             except TypeError as msg:
                 print "Following Ms element could not be bound to uniprot entity, reason " + str(msg)
                 print self
@@ -602,17 +737,61 @@ class Entry:
         return True
 
     def isMatrisome(self, annot=False):
-        matrisomeTerm = Matrisome.get(uniprotID=self['uniprotID'])
+        matrisomeTerm = self.matrisome.get(uniprotID=self['uniprotID'])
         if annot:
             self['matrisomeTerm'] = matrisomeTerm[0]['Category'] + ":" + matrisomeTerm[0]['Division'] if matrisomeTerm else 'NA'
         if matrisomeTerm:
             return True
         return False
 
-    def isECM(self, annot=False):
+    # TO MOD
+    def isCustom(self, annotator, annot=False):
         if not self._boundUniprot():
             return False
-        matches = testEntry(self._uniprotBound)
+        # unroll dictWords, goWords keyWords badGoWords
+        if not 'tag' in annotator:
+            raise ValueError( 'tag key is required to perform annotation test')
+
+        (matchBool, matchContent) = testEntry(self._uniprotBound, annotator)
+
+        if annot:
+            for annotationType in ['positiveAnnotationList', 'negativeAnnotationList']:
+                    for termsList in matchContent[annotationType]:
+                        tag = annotator['tag'] + '_' + termsList['name']
+                        self[tag] = 'NA' if not termsList['matches'] else (';').join(['(ID:' + d['id'] + ')' + d['txt'] for d in termsList['matches']])
+
+        return matchBool
+
+    #DEPRECATED, HAVE TO USE testEntry// isCustom
+    def isECM(self, annot=False):
+
+        goWords = [
+        { 'id' : 'GO:0016020', 'txt' : 'membrane'},
+        { 'id' : 'GO:0005578', 'txt' : 'proteinaceous extracellular matrix'},
+        { 'id' : 'GO:0005201', 'txt' : 'extracellular matrix structural constituent'},
+        { 'id' : 'GO:0005604', 'txt' : 'basement membrane'},
+        { 'id' : 'GO:0031012', 'txt' : 'extracellular matrix'},
+        { 'id' : 'GO:0005605', 'txt' : 'basal lamina'},
+        { 'id' : 'GO:0005576', 'txt' : 'extracellular region'},
+        { 'id' : 'GO:0005615', 'txt' : 'extracellular space'}
+        ]
+        keyWords = [{ 'id' : 'KW-0472', 'txt' : 'Membrane'},
+                { 'id' : 'KW-0272', 'txt' : 'Extracellular matrix'},
+                { 'id' : 'KW-0084', 'txt' : 'Basement membrane'},
+                { 'id' : 'KW-0964', 'txt' : 'Secreted'},
+                { 'id' : 'KW-0339', 'txt' : 'Growth factor'},
+                { 'id' : 'KW-0202', 'txt' : 'Cytokine'}
+        ]
+        badGoWords = [
+        { 'id' : 'GO:0031965', 'txt' : 'nuclear membrane' },
+        { 'id' : 'GO:0005634', 'txt' : 'nucleus' }
+        ]
+
+
+        if not self._boundUniprot():
+            return False
+
+        matches = testEntry(self._uniprotBound, goWords=goWords, keyWords=keyWords, badGoWords=badGoWords)
         isMatrisome = self.isMatrisome(annot=annot)
 
         if annot:

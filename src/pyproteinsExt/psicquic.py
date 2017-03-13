@@ -1,10 +1,13 @@
-import bioservices
+#import bioservices
 import urllib2
 from bs4 import BeautifulSoup
 import re
 import xml.etree.ElementTree as ET
 import pyproteinsExt.uniprot
 import json
+import os
+#from pkg_resources import resource_stream, Requirement
+
 
 PSQ_FIELDS= ["idA", "idB", "altA", "altB", "aliasA", "aliasB", "interactionDetectionMethod", "firstAuthor", "pubid", "taxidA", "taxidB",
             "interactionTypes", "sourceDatabases", "interactionIdentifiers", "confidenceScore", "complexExpansion", "biologicalRoleA"
@@ -93,6 +96,14 @@ class PSICQUIC(object):
         self.records = []
         self.registredPublications = {}
 
+    def json(self, file=None):
+        jsonString = '{"type" : "mitabResult", "data" : [' + ','.join([ psqData.json for psqData in self ]) + '] }'
+
+        if file:
+            with open(file, 'w') as f:
+                f.write(jsonString)
+        return jsonString
+
     def dump(self, file=None):
         if file:
             with open(file, 'w') as f:
@@ -162,10 +173,10 @@ class PSICQUIC(object):
         print len (cloneOne)
         print len (cloneTwo)
 
-        with open('/Users/guillaumelaunay/toto_1.txt', 'w') as f:
-            f.write(cloneOne.dump())
-        with open('/Users/guillaumelaunay/toto_2.txt', 'w') as f:
-            f.write(cloneTwo.dump())
+       # with open('/Users/guillaumelaunay/toto_1.txt', 'w') as f:
+       #     f.write(cloneOne.dump())
+       # with open('/Users/guillaumelaunay/toto_2.txt', 'w') as f:
+       #     f.write(cloneTwo.dump())
         #print '####'
         #print cloneTwo.dump()
 
@@ -234,12 +245,11 @@ class PSICQUIC(object):
                 continue
             miql = self.registry[provider] + 'query/' + miqlString
             #print miql
-
-            ans = self._ping(miql + "?format=tab" + mitabLvl)
+            ans, encoder = self._ping(miql + "?format=tab" + mitabLvl)
             if ans == 0:
-                ans = self._ping(miql + "?format=tab25")
+                ans, encoder = self._ping(miql + "?format=tab25")
             if ans:
-                self._parse(ans)
+                self._parse(ans, encoder=encoder)
             else:
                 continue
 
@@ -262,8 +272,14 @@ class PSICQUIC(object):
             print url + "\n" + str(error.reason)
             return None
         raw = response.read()
+
+        encoder = response.headers['content-type'].split('charset=')[1] if len(response.headers['content-type'].split('charset=')) > 1 else 'utf-8'
+
+
+        #Content-Type:text/plain; charset=utf-8
+
         response.close()
-        return raw
+        return (raw, encoder)
 
     def getRegistry(self, url):
         try:
@@ -279,8 +295,19 @@ class PSICQUIC(object):
 
 
 
-    def _parse(self, raw):
-        bufferRecords = [PSQDATA(line) for line in raw.split("\n") if len(line) > 0]
+    def _parse(self, raw, **kwargs):
+
+        bufferRecords = []
+        for line in raw.split("\n"):
+            if len(line) == 0 or line.startswith("#"):
+                continue
+            if 'encoder' in kwargs:
+                #print "==>" + kwargs['encoder']
+                bufferRecords.append( PSQDATA( line.decode(kwargs['encoder']) ) )
+            else:
+                bufferRecords.append(PSQDATA(line))
+
+
         if self.mode is "LOOSE":
             self.records += bufferRecords
         else:
@@ -380,6 +407,29 @@ class PSICQUIC(object):
                     l += up
             return list(set(l))
 
+# Returns another instance of PSQ with filter data elements
+    def filter(self, **kwargs):
+        target = PSICQUIC()
+        buf = kwargs['uniprot']
+        # For now we dont look into alias uniprot identifiers
+        if 'uniprot' in kwargs:
+            if isinstance(kwargs['uniprot'], list):
+                buf = set(kwargs['uniprot'])
+            elif isinstance(kwargs['uniprot'], basestring):
+                buf = set(kwargs['uniprot'])
+#            elif isinstance(kwargs['uniprot'], set):
+
+            for psqData in self:
+                up = psqData['uniprotPair']
+                if not up:
+                    continue
+               # print up
+               # print buf
+                if set(up) & buf :
+                    #print str(up) + ' <===> ' + str(buf)
+                    target.records.append(psqData)
+
+        return target
 
 # This is the main interface we try to define smart __getitem__() access keys
 class PSQDATA():
@@ -393,6 +443,10 @@ class PSQDATA():
     def __init__(self, raw):
         self.raw = raw
         self.data = [PSQDATUM(column) for column in raw.split("\t")]
+
+        if len(self.data) != 15 and len(self.data) != 42:
+            raise ValueError ("Uncorrect numbner of tabulated fields on input " + str(len(data)) )
+
     def __repr__(self):
         string = "\t".join(map(str,self.data))
         return string
@@ -408,6 +462,8 @@ class PSQDATA():
             return self.data[12].data[0].value
         if key is "interactionDetectionMethod":
             return self.data[6].data[0].value
+        if key is "species":
+            return (self.data[9].data[0].value, self.data[10].data[0].value)
         if key is 'uniprotPair':
             a = pyproteinsExt.uniprot.capture(self.data[0].data[0].value) if pyproteinsExt.uniprot.capture(self.data[0].data[0].value) else pyproteinsExt.uniprot.capture(self.data[2].data[0].value)
             b = pyproteinsExt.uniprot.capture(self.data[1].data[0].value) if pyproteinsExt.uniprot.capture(self.data[1].data[0].value) else pyproteinsExt.uniprot.capture(self.data[3].data[0].value)
@@ -417,8 +473,24 @@ class PSQDATA():
             return None
 
     @property
+    def json(self):
+
+        #for k,d in zip(PSQ_FIELDS, self.data):
+
+            #print k
+            #print d
+            #print d.data
+            #print map(str,d.data)
+
+            #print [ x.replace('"', r'\\') for x in map(str,d.data)]
+
+        return '{' + ','.join([ '"' + k  + '" : [' + ','.join([ '"' + x.replace('"', r'\"') + '"' for x in map(str,d.data) ]) + ']' for k,d in zip(PSQ_FIELDS, self.data) ]) + '}'
+
+    @property
     def interactors(self):
-        return  (self.data[0].content + self.data[2].content, self.data[1].content + self.data[3].content )
+        datum = (self.data[0].content + self.data[2].content, self.data[1].content + self.data[3].content )
+        #print datum
+        return  datum
 
     def hasInteractors(self, mode='STRICT'):
     #    for psqDatum in [ self.data[0].content + self.data[]
@@ -460,10 +532,47 @@ class PSQFIELD():
             self.type = m.groups()[0]
             self.value = m.groups()[1]
             self.annotation = m.groups()[2]
-    def __repr__(self):
-        string = self.value
-        if self.type: string = self.type + string
-        if self.annotation: string = string + "(" + self.annotation + ")"
+   # def __repr__(self):
+        #if isinstance(self.value, basestring):
+   #     if not isinstance(self.value, unicode):
+    #        string = unicode(self.value, 'utf-8')
+    #    else :
+    #        string = self.value
+
+    #    if self.type: string = self.type + string
+    #    if self.annotation: string = string + "(" + self.annotation + ")"
+    #    return string
+
+    def __str__(self):
+
+
+        try :
+            string = self.value.decode('ascii')
+        except UnicodeDecodeError:
+        #    print "Decode error" + self.value
+            string = self.value.decode('utf8')
+        except UnicodeEncodeError:
+            #print "UTF ENCODING"
+            string = self.value.encode('utf8')
+        #string = self.value
+
+        if self.type:
+            string = self.type + string
+        if self.annotation:
+
+            try :
+                str_annot = self.annotation.decode('ascii')
+            except UnicodeDecodeError:
+                #print "OUPS ANNNOT"
+                str_annot = self.annotation.decode('utf8')
+            except UnicodeEncodeError:
+                #print "OUPSS EEECC"
+                str_annot = self.annotation.encode('utf8')
+        #    string = string + "(" + str(str_annot) + ")"
+            string = string + "(" + str(self.annotation) + ")"
+        else:
+            pass
+
         return string
 
 
@@ -481,7 +590,19 @@ class registry():
     def __init__(self, raw):
         if raw:
             #print raw
-            root = ET.fromstring(raw)
+            try:
+                root = ET.fromstring(raw)
+            except:
+                print "Registry Remote XML parsing error, using local file as registry"
+#                resource_stream(Requirement.parse("pyproteinsExt=="), "restez/httpconn.py")
+
+                path =  os.path.abspath(__file__)
+                dir_path = os.path.dirname(path)
+                tree = ET.parse(dir_path + '/static/psicquicRegistryDefault.xml')
+                root = tree.getroot()
+            #else:
+
+
             for child in root:
                 name = ""
                 url = ""

@@ -1,7 +1,10 @@
-import utils
+import pyproteins.services.utils
 class Matrisome:
-    def __init__(self, masterFile="../matrisome_hs_masterlist.tsv.unix"):
-        tsvBuffer = utils.tsvToDictList(fileName=masterFile)
+    def __init__(self, masterFile=None):
+        if not masterFile:
+            raise ValueError ("You must provide a masterFile argument to Matrisome constructor")
+
+        tsvBuffer = pyproteins.services.utils.tsvToDictList(fileName=masterFile)
         self.data = tsvBuffer['data']
         self.keymap = tsvBuffer['keymap']
         self.accessors = self._index()

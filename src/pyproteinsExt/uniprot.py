@@ -84,6 +84,9 @@ class Entry(pyproteins.container.Core.Container):
         self.parseSse()
         self.parseSequence()
         self.parsePDB()
+        self.parseMIM()
+        self.parseDI()
+        self.parseORPHA()
 
     def __hash__(self):
         return hash(self.id)
@@ -100,10 +103,27 @@ class Entry(pyproteins.container.Core.Container):
     def parseLineage(self):
         self.lineage = [ e.text for e in self.xmlHandler.find('lineage').find_all('taxon')]
 
+    def parseMIM(self):
+        self.MIM = []
+        for e in self.xmlHandler.find_all("dbReference", type="MIM"):
+            if str(e.parent.name) == 'entry':
+                self.MIM.append(MimKW(e))
+
+    def parseDI(self):
+        self.DI = []
+        for e in self.xmlHandler.find_all("disease"):
+            self.DI.append(DI(e))
+
     def parseGO(self):
         self.GO = []
         for e in self.xmlHandler.find_all("dbReference", type="GO"):
             self.GO.append(GoKW(e))
+
+    def parseORPHA(self):
+        self.ORPHA = []
+        for e in self.xmlHandler.find_all("dbReference", type="Orphanet"):
+            if str(e.parent.name) == 'entry':
+                self.ORPHA.append(OrphaKW(e))
 
     def parsePDB(self):
         self.pdbRef = []
@@ -125,7 +145,7 @@ class Entry(pyproteins.container.Core.Container):
             try :
                 self.domains = PfamEntrySet.map(uniprotID=self.id)
             except ValueError as msg:
-                print "Could not bind uniprot to its pfam ressources reason\n" + msg
+                print "Could not bind uniprot to its pfam ressources reason\n" + str(msg)
 
     def parseSse(self):
         self.sse = []
@@ -167,6 +187,21 @@ class Entry(pyproteins.container.Core.Container):
 
     def hasGO(self, keyword):
         if keyword.upper() in (kw.id.upper() for kw in self.GO):
+            return True
+        return False
+
+    def hasMIM(self, keyword):
+        if keyword.upper() in (kw.id.upper() for kw in self.MIM):
+            return True
+        return False
+
+    def hasORPHA(self, keyword):
+        if keyword.upper() in (kw.id.upper() for kw in self.ORPHA):
+            return True
+        return False
+
+    def hasDI(self, keyword):
+        if keyword.upper() in (kw.id.upper() for kw in self.DI):
             return True
         return False
 
@@ -316,13 +351,41 @@ class Sse():
     def __repr__(self):
         return "SSE:" + self.type + " " + str(self.begin) + "-" + str(self.end)
 
-class GoKW():
+class GoKW(object):
     def __init__(self, e):
         self.id = e['id']
         self.term = e.find('property', type='term')['value']
         self.evidence = e.find('property',type='evidence')['value']
     def __repr__(self):
         return self.id + ":" + self.term + "{" + self.evidence + "}"
+
+class MimKW(object):
+    def __init__(self, e):
+        self.id = e['id']
+        self.value = e.find('property', type='type')['value']
+    def __repr__(self):
+        return self.id + ":" + self.value
+
+class OrphaKW(object):
+    def __init__(self, e):
+        self.id = e['id']
+        self.type = e.find("property")['type']
+        self.value = e.find('property')['value']
+
+    def __repr__(self):
+        return self.id + ": (" + self.type + ")" + self.value
+
+class DI(object):
+    def __init__(self, e):
+        self.id = e['id']
+        self.name = e.find('name').string
+        acronym = e.find('acronym')
+        self.acronym = acronym.string if acronym else 'NA'
+        self.description = e.find('description').string
+    def __repr__(self):
+        return self.id + ":" + self.name + " (" + self.acronym + ") {" + self.description + "}"
+
+
 
 class PDBref():
     def __init__(self, e):
