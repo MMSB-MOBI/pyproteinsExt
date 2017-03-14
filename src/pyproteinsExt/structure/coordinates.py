@@ -127,7 +127,8 @@ class Residue(object):
 
     def __len__(self):
         return len(self.data)
-    def __str__(self):
+
+    def __repr__(self):
         return ''.join([ str(a) for a in self.data ])
 
     def __getitem__(self, key):
@@ -137,10 +138,25 @@ class Residue(object):
         for d in self.data:
             yield d
         #        return self.data
+    def __str__(self):
+        return "%3s %4d %s" %(self.name, self.num, self.chain)
 
     @property
     def id(self):
         return self.data[0].resName + str(self.data[0].resSeq) + ':' + self.data[0].chainID
+
+    @property
+    def name(self):
+        return self.data[0].resName
+
+    @property
+    def num(self):
+        return self.data[0].resSeq
+
+    @property
+    def chain(self):
+        return self.data[0].chainID
+
 
 class Atom(object):
     def __init__(self, **kwargs):

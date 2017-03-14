@@ -44,6 +44,22 @@ class ContactMap(object):
                 return 1
             return 0
 
-        return ( [(r.id, f(q[i])) for i,r in enumerate(self._resArrayOne)],
-                 [(r.id, f(q.T[i])) for i,r in enumerate(self._resArrayTwo)])
+        return interfaceBoolList( [(r, f(q[i])) for i,r in enumerate(self._resArrayOne)],
+                       [(r, f(q.T[i])) for i,r in enumerate(self._resArrayTwo)] )
 
+
+class interfaceBoolList(object):
+    def __init__(self, l1, l2):
+        self.l1 = l1
+        self.l2 = l2
+    def __getitem__(self, k):
+        if(k == 0):
+            l = self.l1
+        elif(k == 1):
+            l = self.l2
+        else :
+            raise ValueError("index \"" + str(k) + "\"out of bounds ");
+        s = self.asString(l)
+        return s
+    def asString(self, l):
+        return '\n'.join([ "%10s %d" % d for d in l ])
