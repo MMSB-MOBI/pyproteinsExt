@@ -15,7 +15,7 @@ from setuptools import setup
 
 setup(
   name = 'pyproteinsExt',
-  version = '0.31',
+  version = '0.35',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
   author = 'Guillaume Launay',
