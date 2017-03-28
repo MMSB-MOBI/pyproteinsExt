@@ -130,6 +130,7 @@ class Structure(object):
         self.currModel = 1
         self.bufferSelection = []
         self._chainList = None
+        self._residues = None
 
 
     # Browse model and create a new pdbObject with a sinlge model that satifise the provided conditions
@@ -312,9 +313,8 @@ class Structure(object):
     @property
     def fasta(self):
         if not self._fasta:
-            self._fasta = ''.join([ r.fasta for r in self.byres() if r.hasCalpha ])
+            self._fasta = ''.join([ r.fasta for r in self.byres(strict=True) ])
         return self._fasta
-
 
     @property
     def atomRecord(self):
@@ -328,7 +328,7 @@ class Structure(object):
             self._chainList = list(set(buf))
         return self._chainList
 
-    def byres(self):
+    def byres(self, strict=False):
 
         i = 0
         data = self.model[self.currModel - 1]
@@ -343,15 +343,18 @@ class Structure(object):
             if w_resSeq != cur_atom.resSeq or w_chainID != cur_atom.chainID:
                 #i_stop = i + 1
                 #print "pulling at " + str(i_start) + ":" + str(i)
-                yield Residue(data[i_start:i])
-
+                x = Residue(data[i_start:i])
+                if (strict and x.hasCalpha) or not strict:
+                    yield x
                 w_resSeq  = cur_atom.resSeq
                 w_chainID = cur_atom.chainID
 
                 i_start = i
             i += 1
-        yield Residue(data[i_start:])
 
+        x = Residue(data[i_start:i])
+        if (strict and x.hasCalpha) or not strict:
+            yield x
 
     def pop(self): # Append an empty array to model list and return its referenc
 
