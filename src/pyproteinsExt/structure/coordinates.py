@@ -334,13 +334,14 @@ class Structure(object):
         data = self.model[self.currModel - 1]
         w_resSeq = data[0].resSeq
         w_chainID = data[0].chainID
+        w_iCode = data[0].iCode
         i_start = 0
         i_stop = 0
         while i < len(data):
             #print str(i) + " -- " + str(len(data))
             cur_atom = data[i]
             #print str(w_resSeq) + ' vs ' + str(cur_atom.resSeq) + ' and ' + w_chainID + ' vs ' + cur_atom.chainID
-            if w_resSeq != cur_atom.resSeq or w_chainID != cur_atom.chainID:
+            if w_resSeq != cur_atom.resSeq or w_chainID != cur_atom.chainID or w_iCode != cur_atom.iCode:
                 #i_stop = i + 1
                 #print "pulling at " + str(i_start) + ":" + str(i)
                 x = Residue(data[i_start:i])
@@ -348,6 +349,7 @@ class Structure(object):
                     yield x
                 w_resSeq  = cur_atom.resSeq
                 w_chainID = cur_atom.chainID
+                w_iCode = cur_atom.iCode
 
                 i_start = i
             i += 1
@@ -431,7 +433,7 @@ class Residue(object):
             yield d
         #        return self.data
     def __str__(self):
-        return "%3s %4d %s" %(self.name, self.num, self.chain)
+        return "%3s %4d%c %s" %(self.name, self.num, self.iCode,self.chain)
 
     @property
     def fasta(self):
@@ -452,6 +454,10 @@ class Residue(object):
     @property
     def chain(self):
         return self.data[0].chainID
+
+    @property
+    def iCode(self):
+        return self.data[0].iCode
 
     @property
     def hasCalpha(self):
