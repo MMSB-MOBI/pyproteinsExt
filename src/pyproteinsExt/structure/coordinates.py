@@ -72,7 +72,8 @@ COLUMNS        DATA  TYPE    FIELD        DEFINITION
 
 class Parser(object):
     def __init__(self):
-        pass
+        print 'TITI'
+        #pass
 
     def load(self, **kwargs):
         structureObj = Structure();
@@ -472,7 +473,7 @@ class Atom(object):
             buf=kwargs['string']
             bufLen = len(buf)
             if bufLen < 55:
-                raise TypeError("Unexpected atom record length \"" + str(buLen) + "\" on input at \n" + buf)
+                raise TypeError("Unexpected atom record length \"" + str(bufLen) + "\" on input at \n" + buf)
 
             self.recordName=buf[0:6].replace(" ", "")
             self.serial=int(buf[6:11])
