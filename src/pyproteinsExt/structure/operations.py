@@ -42,13 +42,16 @@ class Cell(object):
 
 class ContactMap(object):
     def __init__(self, s1, s2):
-        self.mtx = numpy.zeros((s1.residueNumber, s2.residueNumber))
+        self.nb_row = s1.residueNumber
+        self.nb_col = s2.residueNumber
+        self.mtx = numpy.zeros((self.nb_row, self.nb_col))
 
         self._resArrayOne = [ x for x in s1.byres() ]
         self._resArrayTwo = [ x for x in s2.byres() ]
 
         self.rl = [r.id for r in self._resArrayOne]
         self.cl = [r.id for r in self._resArrayTwo]
+
         for i1, r1 in enumerate(self._resArrayOne):
             for i2, r2 in enumerate(self._resArrayTwo):
                 self.mtx[i1, i2] = minDist(r1, r2)
@@ -82,6 +85,21 @@ class ContactMap(object):
         return interfaceBoolList( [({ 'num' : r.num, 'name' : r.name, 'chain' : r.chain }, f(q[i])) for i,r in enumerate(self._resArrayOne)],
                        [({ 'num' : r.num, 'name' : r.name, 'chain' : r.chain}, f(q.T[i])) for i,r in enumerate(self._resArrayTwo)] )
 
+    def weighted_contact_number(self):
+        mtx = numpy.zeros((self.nb_row, self.nb_col))
+
+        for i in range(len(self._resArrayOne)):
+            for j in range(len(self._resArrayTwo)):
+                if i != j:
+                    mtx[i, j] = (1 / self.mtx[i, j]) ** 2
+
+        path_out = "/Users/tsluys/Documents/StageM1/results/" + "wcn" + "_1A2K_l_b.txt"
+        OUT = open(path_out,"w")
+        for i, value in enumerate(mtx.sum(axis=1,dtype=float)):
+            OUT.write('(' + str(self.rl[i]) + ') : ' + str(value) + '\n')
+        OUT.close()
+
+        return mtx.sum(axis=1,dtype=float)
 
 class interfaceBoolList(object):
     def __init__(self, l1, l2):
