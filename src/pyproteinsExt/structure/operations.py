@@ -42,9 +42,9 @@ class Cell(object):
 
 class ContactMap(object):
     def __init__(self, s1, s2):
-        self.nb_row = s1.residueNumber
-        self.nb_col = s2.residueNumber
-        self.mtx = numpy.zeros((self.nb_row, self.nb_col))
+        self.nb_raws = s1.residueNumber
+        self.nb_columns = s2.residueNumber
+        self.mtx = numpy.zeros((self.nb_raws, self.nb_columns))
 
         self._resArrayOne = [ x for x in s1.byres() ]
         self._resArrayTwo = [ x for x in s2.byres() ]
@@ -86,20 +86,16 @@ class ContactMap(object):
                        [({ 'num' : r.num, 'name' : r.name, 'chain' : r.chain}, f(q.T[i])) for i,r in enumerate(self._resArrayTwo)] )
 
     def weighted_contact_number(self):
-        mtx = numpy.zeros((self.nb_row, self.nb_col))
+        mtx = numpy.zeros((self.nb_raws, self.nb_columns))
 
         for i in range(len(self._resArrayOne)):
             for j in range(len(self._resArrayTwo)):
                 if i != j:
-                    mtx[i, j] = (1 / self.mtx[i, j]) ** 2
+                    mtx[i, j] = 1/(self.mtx[i, j]**2)
 
-        path_out = "/Users/tsluys/Documents/StageM1/results/" + "wcn" + "_1A2K_l_b.txt"
-        OUT = open(path_out,"w")
-        for i, value in enumerate(mtx.sum(axis=1,dtype=float)):
-            OUT.write('(' + str(self.rl[i]) + ') : ' + str(value) + '\n')
-        OUT.close()
+        wcn = mtx.sum(axis=1,dtype=float)
 
-        return mtx.sum(axis=1,dtype=float)
+        return wcn
 
 class interfaceBoolList(object):
     def __init__(self, l1, l2):
