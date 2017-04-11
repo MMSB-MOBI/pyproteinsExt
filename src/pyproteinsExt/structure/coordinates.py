@@ -72,8 +72,7 @@ COLUMNS        DATA  TYPE    FIELD        DEFINITION
 
 class Parser(object):
     def __init__(self):
-        print 'TITI'
-        #pass
+        pass
 
     def load(self, **kwargs):
         structureObj = Structure();
