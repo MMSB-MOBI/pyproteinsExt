@@ -96,7 +96,7 @@ class ContactMap(object):
 		return mtx.sum(axis=1,dtype=float)
 
 class ContactMap_intra(object):
-	def __init__(self, struc):
+	def __init__(self, struc, cutoff=5.0):
 		self.nb = struc.residueNumber
 		self.mtx = numpy.zeros((self.nb,self.nb))
 
@@ -104,9 +104,16 @@ class ContactMap_intra(object):
 
 		self.l = [r.id for r in self._resArray]
 
+		self.list_dist = []
+		self.counter = 0
+
 		for i in range(len(self._resArray)):
-			for j in range(i,len(self._resArray)):
+			for j in range(i+1,len(self._resArray)):
 				self.mtx[i, j] = minDist(self._resArray[i], self._resArray[j])
+				self.counter += 1
+
+				if self.mtx[i, j] < cutoff:
+					self.list_dist.append(str(Cell(self.l[i], self.l[j], self.mtx[i, j])))
 
 	# matrix element accessor along with row/column label, mostly for inspection
 	def __getitem__(self, tup):
@@ -114,7 +121,7 @@ class ContactMap_intra(object):
 		return Cell(self.l[x], self.l[y], self.mtx[x, y])
 
 	def __str__(self):
-		print 'Contact map intra residual ' + str(len(self.l)) + 'x' + str(len(self.l)) + '\n'
+		print 'Contact map intra ' + str(len(self.l)) + 'x' + str(len(self.l)) + '\n'
 		asString = '		' + ''.join(["%9s" % r for r in self.l]) + '\n'
 		for i, row in enumerate(self.mtx):
 			asString += "%9s" % self.l[i]
@@ -126,13 +133,49 @@ class ContactMap_intra(object):
 		mtx = numpy.zeros((self.nb,self.nb))
 
 		for i in range(len(self._resArray)):
-			for j in range(i,len(self._resArray)):
-				if i != j:
-					mtx[i, j] = 1/(self.mtx[i, j]**2)
+			for j in range(i+1,len(self._resArray)):
+				mtx[i, j] = 1/(self.mtx[i, j]**2)
 
 		symetric_mtx = mtx + mtx.T
 
 		return symetric_mtx.sum(axis=1,dtype=float)
+
+class ContactOrder(object):
+	def __init__(self, struc_name, struc, cutoff=5.0):
+		self._contiguous = None
+		self.list_CO = []
+
+		for curr_ch in struc.chainList:
+
+			self.sub_struct = struc.chain(curr_ch)
+			cm_intra = ContactMap_intra(self.sub_struct)
+			counter,SUM = 0,0
+
+			for i in range(len(cm_intra._resArray)):
+				for j in range(i+1,len(cm_intra._resArray)):
+					if cm_intra.mtx[i, j] < cutoff:
+						SUM += abs(i-j)
+						counter += 1
+
+			self.list_CO.append([struc_name,curr_ch,'{:.2f}'.format(float(SUM)/counter),self.contiguous])
+
+	def __iter__(self):
+		for item in self.list_CO:
+			yield item
+
+	@property
+	def contiguous(self):
+		if not self._contiguous:
+			self._contiguous = True
+			trace_list = [atom for atom in self.sub_struct.trace]
+			for i in range(1,len(trace_list)):
+				curr_atom = trace_list[i]
+				prev_atom = trace_list[i-1]
+				dist = minDist([curr_atom],[prev_atom])
+				if float(dist) > 4.0:
+					self._contiguous = False
+					break
+		return self._contiguous
 
 class interfaceBoolList(object):
 	def __init__(self, l1, l2):
