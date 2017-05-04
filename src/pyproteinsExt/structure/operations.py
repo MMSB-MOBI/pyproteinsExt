@@ -148,7 +148,7 @@ class ContactOrder(object):
 		for curr_ch in struc.chainList:
 
 			self.sub_struct = struc.chain(curr_ch)
-			cm_intra = ContactMap_intra(self.sub_struct)
+			cm_intra = ContactMap_intra(self.sub_struct,cutoff)
 			counter,SUM = 0,0
 
 			for i in range(len(cm_intra._resArray)):
