@@ -314,19 +314,22 @@ class ContactMap_grid(object):
     def statistics(self):
         if not self._statistics:
 
-            counter = 0
+            counter1,counter2 = 0,0
     
-            for idx in numpy.nditer(self.contact_map):
-                if idx < self.cutoff:
-                    counter += 1
+            for idx1 in range(len(self.dist_LIST)):
+                if self.dist_LIST[idx1][1] < self.cutoff:
+                    counter1 += 1
 
-            counter = int ( float( counter ) / 2 )
+            for idx2 in numpy.nditer(self.contact_map):
+                if idx2 < self.cutoff:
+                    counter2 += 1
 
             total_2D = self.nb_atom ** 2
             partial_2D = int( self.nb_atom * ( self.nb_atom - 1 ) ) / 2
-            gain_grid_insteadof_total2D = 100 - ( (float( counter ) / total_2D ) * 100 )
-            gain_grid_insteadof_partial2D = 100 - ( (float( counter ) / partial_2D ) * 100 )
-            percent_useful = ( float( counter ) / self.nb_dist_grid ) * 100
+            gain_grid_insteadof_total2D = 100 - ( (float( self.nb_dist_grid ) / total_2D ) * 100 )
+            gain_grid_insteadof_partial2D = 100 - ( (float( self.nb_dist_grid ) / partial_2D ) * 100 )
+            percent_useful_dist = ( float( counter1 ) / self.nb_dist_grid ) * 100
+            percent_useful_cm = ( float( counter2 ) / ( len( self.struc.getResID ) ** 2 ) ) * 100
 
             self._statistics = "###"
             self._statistics += "\n*** in the file '" + self.filename_IN + "'"
@@ -337,13 +340,16 @@ class ContactMap_grid(object):
             self._statistics += "\n** maximum number of distances calculated with a..."
             self._statistics += "\n* full 2D matrix : " + str( total_2D ) + " ( <=> " + str( self.nb_atom ) + " * " + str( self.nb_atom ) + " )"
             self._statistics += "\n* superior triangle (partial 2D) matrix : " + str( partial_2D ) + " ( <=> ( " + str( self.nb_atom ) + " * ( " + str( self.nb_atom ) + " - 1 ) ) / 2 )"
-            self._statistics += "\n* 3D grid with cutoff (= " + str( self.cutoff ) + ") : " + str( self.nb_dist_grid )
-            self._statistics += "\n** % gain with 3D grid instead of a..."
+            self._statistics += "\n* 3D grid (cutoff = " + str( self.cutoff ) + ") : " + str( self.nb_dist_grid )
+            self._statistics += "\n** 'in %' gain with 3D grid instead of a..."
             self._statistics += "\n* full 2D matrix : " + '{:.2f}'.format( gain_grid_insteadof_total2D )
             self._statistics += "\n* superior triangle (partial 2D) matrix : " + '{:.2f}'.format( gain_grid_insteadof_partial2D )
             self._statistics += "\n** distances with 3D grid..."
-            self._statistics += "\n* number < cutoff (= " + str( self.cutoff ) + ") : " + str( counter )
-            self._statistics += "\n* % useful < cutoff (= " + str( self.cutoff ) + ") : " + '{:.2f}'.format( percent_useful )
+            self._statistics += "\n* total number < cutoff (= " + str( self.cutoff ) + ") : " + str( counter1 )
+            self._statistics += "\n* 'in %' useful < cutoff (= " + str( self.cutoff ) + ") : " + '{:.2f}'.format( percent_useful_dist )
+            self._statistics += "\n** distances in the full contact map with 3D grid..."
+            self._statistics += "\n* final number < cutoff (= " + str( self.cutoff ) + ") : " + str( counter2 ) + " ( <=> " + str( int( float( counter2 ) / 2 ) ) + " * 2 due to symmetry by first diagonal )"
+            self._statistics += "\n* 'in %' useful < cutoff (= " + str( self.cutoff ) + ") : " + '{:.2f}'.format( percent_useful_cm )
             self._statistics += "\n###"
 
         return self._statistics
