@@ -131,7 +131,13 @@ class Structure(object):
 		self.bufferSelection = []
 		self._chainList = None
 		self._residues = None
+		self._resID = None
 
+	@property
+	def getResID(self):
+		if not self._resID:
+			self._resID = [residue.data[0].getResID for residue in self.byres()]
+		return self._resID
 
 	# Browse model and create a new pdbObject with a sinlge model that satifise the provided conditions
 	# Eg: ask for the 1st model w/ oligomeric composition chain=["A","B","C"]
@@ -488,11 +494,15 @@ class Atom(object):
 			self.occupancy  = float(buf[54:60])		   if bufLen > 54 else None
 			self.tempFactor = float(buf[60:66])		   if bufLen > 60 else None
 			self.element	= buf[76:78].replace(" ", "") if bufLen > 76 else None
-			self.charge	 = buf[78:80].replace(" ", "") if bufLen > 78 else None
+			self.Charge     = buf[78:80].replace(" ", "") if bufLen > 78 else None
 
 	@property
 	def coordinates(self):
 		return [self.x, self.y, self.z]
+
+	@property
+	def getResID(self):
+		return self.resName + str(self.resSeq) + ':' + self.chainID + ':' + self.iCode
 
 	def __hash__(self):
 		tup = (self.recordName, self.serial, self.altLoc, self.resName, self.chainID, self.resSeq, self.iCode, self.x, self.y, self.z, self.occupancy, self.tempFactor, self.element, self.charge)

@@ -105,14 +105,15 @@ class ContactMap_intra(object):
 		self.l = [r.id for r in self._resArray]
 
 		self.list_dist = []
-		self.counter = 0
+		self.counter_mindist, self.counter_infcutoff = 0, 0
 
 		for i in range(len(self._resArray)):
 			for j in range(i+1,len(self._resArray)):
 				self.mtx[i, j] = minDist(self._resArray[i], self._resArray[j])
-				self.counter += 1
+				self.counter_mindist += 1
 
 				if self.mtx[i, j] < cutoff:
+					self.counter_infcutoff += 1
 					self.list_dist.append(str(Cell(self.l[i], self.l[j], self.mtx[i, j])))
 
 	# matrix element accessor along with row/column label, mostly for inspection
@@ -176,6 +177,176 @@ class ContactOrder(object):
 					self._contiguous = False
 					break
 		return self._contiguous
+
+class ContactMap_grid(object):
+    def __init__(self, filename_IN, cutoff=5.0):
+        self.filename_IN = filename_IN
+        self.cutoff = cutoff
+        self._parsing(self.filename_IN)
+        self._build_grid()
+        self._list_next_unique_neighbors()
+        self._calculate_distances()
+        self._statistics = None
+
+    def _parsing(self, file_IN):
+        # ---
+        # PARSING
+        # ---
+
+        parse = PDB.Parser()
+        self.struc = parse.load(file=file_IN)
+
+        self.nb_atom = 0
+
+        self.min_x,self.min_y,self.min_z = 9999999.99999,9999999.99999,9999999.99999
+        self.max_x,self.max_y,self.max_z = -9999999.99999,-9999999.99999,-9999999.99999
+
+        for atom in self.struc.atomRecord:
+            # ---
+            # GET MINIMUMS AND MAXIMUMS OF EACH COORDINATES X,Y,Z
+            # ---
+
+            self.nb_atom += 1
+
+            self.min_x = atom.x if atom.x < self.min_x else self.min_x
+            self.min_y = atom.y if atom.y < self.min_y else self.min_y
+            self.min_z = atom.z if atom.z < self.min_z else self.min_z
+
+            self.max_x = atom.x if atom.x > self.max_x else self.max_x
+            self.max_y = atom.y if atom.y > self.max_y else self.max_y
+            self.max_z = atom.z if atom.z > self.max_z else self.max_z
+
+        # ---
+        # GET DIMENSIONS OF THE 3D GRID
+        # ---
+
+        self.dim_x = int(math.floor((self.max_x-self.min_x)/self.cutoff))+1
+        self.dim_y = int(math.floor((self.max_y-self.min_y)/self.cutoff))+1
+        self.dim_z = int(math.floor((self.max_z-self.min_z)/self.cutoff))+1
+
+    def _coor_Cartesian2Grid(self,atom):
+        # ---
+        # GET AN ATOM AND RETURN ITS NORMALIZED COORDINATES
+        # ---
+        return [int(math.floor((atom.x-self.min_x)/self.cutoff)),int(math.floor((atom.y-self.min_y)/self.cutoff)),int(math.floor((atom.z-self.min_z)/self.cutoff))]
+
+    def _build_grid(self):
+        self.grid_3D = numpy.empty((self.dim_x,self.dim_y,self.dim_z),dtype=numpy.object_)
+        self.grid_3D.fill([])
+        self.grid_3D = numpy.frompyfunc(list,1,1)(self.grid_3D)
+
+        for atom in self.struc.atomRecord:
+            [i,j,k] = self._coor_Cartesian2Grid(atom)
+            self.grid_3D[i,j,k].append(atom)
+
+    def _iter_next_unique_neighbors(self, x, y, z):
+        value_list = []
+
+        for i in range(x, x+2):
+            if i == self.dim_x: 
+                break
+
+            for j in range(y-1, y+2):
+                if j < 0:
+                    continue
+                if j == self.dim_y: 
+                    break
+
+                for k in range(z-1, z+2):
+                    if k < 0:
+                        continue
+                    if k == self.dim_z: 
+                        break
+
+                    if ( i > x or j > y or (j > y-1 and k > z-1) ) and self.grid_3D[i,j,k] != []:
+                        value_list.append(self.grid_3D[i,j,k])
+
+        return value_list
+
+    def _list_next_unique_neighbors(self):
+        self.value_LIST = []
+
+        for i in range(self.dim_x):
+            for j in range(self.dim_y):
+                for k in range(self.dim_z):
+
+                    if self.grid_3D[i,j,k] != []:
+                        self.value_LIST.append(self._iter_next_unique_neighbors(i,j,k))
+
+    def _euclidianDist(self, atom1, atom2):
+        mtx_atom1 = numpy.array(atom1.coordinates)
+        mtx_atom2 = numpy.array(atom2.coordinates)
+        return numpy.linalg.norm(mtx_atom1 - mtx_atom2)
+
+    def _calculate_distances(self):
+        self.dist_LIST = []
+        self.nb_dist_grid = 0
+
+        for i in range(len(self.value_LIST)):
+            current = self.value_LIST[i][0]
+            neighbors_flat_LIST = [j for i2 in self.value_LIST[i][1:] for j in i2]
+
+            for j in range(len(current)):
+
+                for k in range(j+1,len(current)):
+                    self.dist_LIST.append([[current[j],current[k]],self._euclidianDist(current[j],current[k])])
+                    self.nb_dist_grid += 1
+
+                for l in range(len(neighbors_flat_LIST)):
+                    self.dist_LIST.append([[current[j],neighbors_flat_LIST[l]],self._euclidianDist(current[j],neighbors_flat_LIST[l])])
+                    self.nb_dist_grid += 1
+
+    def build_ContactMap(self):
+        self.contact_map = numpy.empty((len(self.struc.getResID),len(self.struc.getResID)),dtype=float)
+        self.contact_map.fill(9999999.99999)
+
+        for idx in self.dist_LIST:
+            i = self.struc.getResID.index(idx[0][0].getResID)
+            j = self.struc.getResID.index(idx[0][1].getResID)
+
+            if idx[1] < self.contact_map[i][j] and i != j:
+                self.contact_map[i][j] = idx[1]
+                self.contact_map[j][i] = idx[1]
+
+        return self.contact_map
+
+    @property
+    def statistics(self):
+        if not self._statistics:
+
+            counter = 0
+    
+            for idx in numpy.nditer(self.contact_map):
+                if idx < self.cutoff:
+                    counter += 1
+
+            counter = int ( float( counter ) / 2 )
+
+            total_2D = self.nb_atom ** 2
+            partial_2D = int( self.nb_atom * ( self.nb_atom - 1 ) ) / 2
+            gain_grid_insteadof_total2D = 100 - ( (float( counter ) / total_2D ) * 100 )
+            gain_grid_insteadof_partial2D = 100 - ( (float( counter ) / partial_2D ) * 100 )
+            percent_useful = ( float( counter ) / self.nb_dist_grid ) * 100
+
+            self._statistics = "###"
+            self._statistics += "\n*** in the file '" + self.filename_IN + "'"
+            self._statistics += "\n** number of..."
+            self._statistics += "\n* residues : " + str( len( self.struc.getResID ) )
+            self._statistics += "\n* atoms : " + str( self.nb_atom )
+            self._statistics += "\n*** statistics"
+            self._statistics += "\n** maximum number of distances calculated with a..."
+            self._statistics += "\n* full 2D matrix : " + str( total_2D ) + " ( <=> " + str( self.nb_atom ) + " * " + str( self.nb_atom ) + " )"
+            self._statistics += "\n* superior triangle (partial 2D) matrix : " + str( partial_2D ) + " ( <=> ( " + str( self.nb_atom ) + " * ( " + str( self.nb_atom ) + " - 1 ) ) / 2 )"
+            self._statistics += "\n* 3D grid with cutoff (= " + str( self.cutoff ) + ") : " + str( self.nb_dist_grid )
+            self._statistics += "\n** % gain with 3D grid instead of a..."
+            self._statistics += "\n* full 2D matrix : " + '{:.2f}'.format( gain_grid_insteadof_total2D )
+            self._statistics += "\n* superior triangle (partial 2D) matrix : " + '{:.2f}'.format( gain_grid_insteadof_partial2D )
+            self._statistics += "\n** distances with 3D grid..."
+            self._statistics += "\n* number < cutoff (= " + str( self.cutoff ) + ") : " + str( counter )
+            self._statistics += "\n* % useful < cutoff (= " + str( self.cutoff ) + ") : " + '{:.2f}'.format( percent_useful )
+            self._statistics += "\n###"
+
+        return self._statistics
 
 class interfaceBoolList(object):
 	def __init__(self, l1, l2):
