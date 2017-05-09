@@ -152,171 +152,172 @@ class ContactMap_intra(object):
 
 
 class ContactMap_intra_grid(object):
-	def __init__(self, struc, cutoff=5.0):
-		self.struc = struc
-		self.cutoff = cutoff
-		self._parsing()
-		self._build_grid()
-		self._list_next_unique_neighbors()
-		self._calculate_distances()
-		self._build_ContactMap()
+    def __init__(self, struc, cutoff=5.0):
+        self.struc = struc
+        self._resArray = self.struc.getResID
+        self.cutoff = cutoff
+        self._parsing()
+        self._build_grid()
+        self._list_next_unique_neighbors()
+        self._calculate_distances()
+        self._build_ContactMap()
 
-	# matrix element accessor along with row/column label, mostly for inspection
-	def __getitem__(self, tup):
-		x, y = tup
-		return Cell(self.struc.getResID[x], self.struc.getResID[y], self.mtx[x, y])
+    # matrix element accessor along with row/column label, mostly for inspection
+    def __getitem__(self, tup):
+        x, y = tup
+        return Cell(self._resArray[x], self._resArray[y], self.mtx[x, y])
 
-	def __str__(self):
-		print 'Contact map grid ' + str(len(self.struc.getResID)) + 'x' + str(len(self.struc.getResID)) + '\n'
-		asString = '\t\t' + ''.join(["%9s" % r for r in self.struc.getResID]) + '\n'
-		for i, row in enumerate(self.mtx):
-			asString += "%9s" % self.struc.getResID[i]
-			asString += ' '.join(["%9.1f" % d for d in row])
-			asString += '\n'
-		return asString
+    def __str__(self):
+        print 'Contact map grid ' + str(len(self._resArray)) + 'x' + str(len(self._resArray)) + '\n'
+        asString = '\t\t' + ''.join(["%9s" % r for r in self._resArray]) + '\n'
+        for i, row in enumerate(self.mtx):
+            asString += "%9s" % self._resArray[i]
+            asString += ' '.join(["%9.1f" % d for d in row])
+            asString += '\n'
+        return asString
 
-	def _parsing(self):
-		# ---
-		# PARSING
-		# ---
+    def _parsing(self):
+        # ---
+        # PARSING
+        # ---
 
-		self.min_x,self.min_y,self.min_z = 9999999.99999,9999999.99999,9999999.99999
-		self.max_x,self.max_y,self.max_z = -9999999.99999,-9999999.99999,-9999999.99999
+        self.min_x,self.min_y,self.min_z = 9999999.99999,9999999.99999,9999999.99999
+        self.max_x,self.max_y,self.max_z = -9999999.99999,-9999999.99999,-9999999.99999
 
-		for atom in self.struc.atomRecord:
-			# ---
-			# GET MINIMUMS AND MAXIMUMS OF EACH COORDINATES X,Y,Z
-			# ---
+        for atom in self.struc.atomRecord:
+            # ---
+            # GET MINIMUMS AND MAXIMUMS OF EACH COORDINATES X,Y,Z
+            # ---
 
-			self.min_x = atom.x if atom.x < self.min_x else self.min_x
-			self.min_y = atom.y if atom.y < self.min_y else self.min_y
-			self.min_z = atom.z if atom.z < self.min_z else self.min_z
+            self.min_x = atom.x if atom.x < self.min_x else self.min_x
+            self.min_y = atom.y if atom.y < self.min_y else self.min_y
+            self.min_z = atom.z if atom.z < self.min_z else self.min_z
 
-			self.max_x = atom.x if atom.x > self.max_x else self.max_x
-			self.max_y = atom.y if atom.y > self.max_y else self.max_y
-			self.max_z = atom.z if atom.z > self.max_z else self.max_z
+            self.max_x = atom.x if atom.x > self.max_x else self.max_x
+            self.max_y = atom.y if atom.y > self.max_y else self.max_y
+            self.max_z = atom.z if atom.z > self.max_z else self.max_z
 
-		# ---
-		# GET DIMENSIONS OF THE 3D GRID
-		# ---
+        # ---
+        # GET DIMENSIONS OF THE 3D GRID
+        # ---
 
-		self.dim_x = int(math.floor((self.max_x-self.min_x)/self.cutoff))+1
-		self.dim_y = int(math.floor((self.max_y-self.min_y)/self.cutoff))+1
-		self.dim_z = int(math.floor((self.max_z-self.min_z)/self.cutoff))+1
+        self.dim_x = int(math.floor((self.max_x-self.min_x)/self.cutoff))+1
+        self.dim_y = int(math.floor((self.max_y-self.min_y)/self.cutoff))+1
+        self.dim_z = int(math.floor((self.max_z-self.min_z)/self.cutoff))+1
 
-	def _coor_Cartesian2Grid(self,atom):
-		# ---
-		# GET AN ATOM AND RETURN ITS NORMALIZED COORDINATES
-		# ---
-		return [int(math.floor((atom.x-self.min_x)/self.cutoff)),int(math.floor((atom.y-self.min_y)/self.cutoff)),int(math.floor((atom.z-self.min_z)/self.cutoff))]
+    def _coor_Cartesian2Grid(self,atom):
+        # ---
+        # GET AN ATOM AND RETURN ITS NORMALIZED COORDINATES
+        # ---
+        return [int(math.floor((atom.x-self.min_x)/self.cutoff)),int(math.floor((atom.y-self.min_y)/self.cutoff)),int(math.floor((atom.z-self.min_z)/self.cutoff))]
 
-	def _build_grid(self):
-		self.grid_3D = numpy.empty((self.dim_x,self.dim_y,self.dim_z),dtype=numpy.object_)
-		self.grid_3D.fill([])
-		self.grid_3D = numpy.frompyfunc(list,1,1)(self.grid_3D)
+    def _build_grid(self):
+        self.grid_3D = numpy.empty((self.dim_x,self.dim_y,self.dim_z),dtype=numpy.object_)
+        self.grid_3D.fill([])
+        self.grid_3D = numpy.frompyfunc(list,1,1)(self.grid_3D)
 
-		for atom in self.struc.atomRecord:
-			[i,j,k] = self._coor_Cartesian2Grid(atom)
-			self.grid_3D[i,j,k].append(atom)
+        for atom in self.struc.atomRecord:
+            [i,j,k] = self._coor_Cartesian2Grid(atom)
+            self.grid_3D[i,j,k].append(atom)
 
-	def _iter_next_unique_neighbors(self, x, y, z):
-		value_list = []
+    def _iter_next_unique_neighbors(self, x, y, z):
+        value_list = []
 
-		for i in range(x, x+2):
-			if i == self.dim_x: 
-				break
+        for i in range(x, x+2):
+            if i == self.dim_x: 
+                break
 
-			for j in range(y-1, y+2):
-				if j < 0:
-					continue
-				if j == self.dim_y: 
-					break
+            for j in range(y-1, y+2):
+                if j < 0:
+                    continue
+                if j == self.dim_y: 
+                    break
 
-				for k in range(z-1, z+2):
-					if k < 0:
-						continue
-					if k == self.dim_z: 
-						break
+                for k in range(z-1, z+2):
+                    if k < 0:
+                        continue
+                    if k == self.dim_z: 
+                        break
 
-					if ( i > x or j > y or (j > y-1 and k > z-1) ) and self.grid_3D[i,j,k] != []:
-						value_list.append(self.grid_3D[i,j,k])
+                    if ( i > x or j > y or (j > y-1 and k > z-1) ) and self.grid_3D[i,j,k] != []:
+                        value_list.append(self.grid_3D[i,j,k])
 
-		return value_list
+        return value_list
 
-	def _list_next_unique_neighbors(self):
-		self.value_LIST = []
+    def _list_next_unique_neighbors(self):
+        self.value_LIST = []
 
-		for i in range(self.dim_x):
-			for j in range(self.dim_y):
-				for k in range(self.dim_z):
+        for i in range(self.dim_x):
+            for j in range(self.dim_y):
+                for k in range(self.dim_z):
 
-					if self.grid_3D[i,j,k] != []:
-						self.value_LIST.append(self._iter_next_unique_neighbors(i,j,k))
+                    if self.grid_3D[i,j,k] != []:
+                        self.value_LIST.append(self._iter_next_unique_neighbors(i,j,k))
 
-	def _calculate_distances(self):
-		self.dist_LIST = []
+    def _calculate_distances(self):
+        self.dist_LIST = []
 
-		for i in range(len(self.value_LIST)):
-			current = self.value_LIST[i][0]
-			neighbors_flat_LIST = [j for i2 in self.value_LIST[i][1:] for j in i2]
+        for i in range(len(self.value_LIST)):
+            current = self.value_LIST[i][0]
+            neighbors_flat_LIST = [j for i2 in self.value_LIST[i][1:] for j in i2]
 
-			for j in range(len(current)):
+            for j in range(len(current)):
 
-				for k in range(j+1,len(current)):
-					self.dist_LIST.append([[current[j],current[k]],euclidianDist(current[j],current[k])])
+                for k in range(j+1,len(current)):
+                    self.dist_LIST.append([[current[j],current[k]],euclidianDist(current[j],current[k])])
 
-				for l in range(len(neighbors_flat_LIST)):
-					self.dist_LIST.append([[current[j],neighbors_flat_LIST[l]],euclidianDist(current[j],neighbors_flat_LIST[l])])
+                for l in range(len(neighbors_flat_LIST)):
+                    self.dist_LIST.append([[current[j],neighbors_flat_LIST[l]],euclidianDist(current[j],neighbors_flat_LIST[l])])
 
-	def _build_ContactMap(self):
-		self.mtx = numpy.empty((len(self.struc.getResID),len(self.struc.getResID)),dtype=float)
-		self.mtx.fill(9999999.99999)
+    def _build_ContactMap(self):
+        self.mtx = numpy.empty((len(self._resArray),len(self._resArray)),dtype=float)
+        self.mtx.fill(9999999.99999)
 
-		for idx in self.dist_LIST:
-			i = self.struc.getResID.index(idx[0][0].getResID)
-			j = self.struc.getResID.index(idx[0][1].getResID)
+        for idx in self.dist_LIST:
+            i = self._resArray.index(idx[0][0].getResID)
+            j = self._resArray.index(idx[0][1].getResID)
 
-			if idx[1] < self.mtx[i, j] and i != j:
-				self.mtx[i, j] = idx[1]
-				self.mtx[j, i] = idx[1]
+            if idx[1] < self.mtx[i, j] and i != j:
+                self.mtx[i, j] = idx[1]
+                self.mtx[j, i] = idx[1]
 
 
 class ContactOrder(object):
-	def __init__(self, struc_name, struc, cutoff=5.0):
-		self._contiguous = None
-		self.list_CO = []
+    def __init__(self, struc_name, struc, cutoff=5.0):
+        self._contiguous = None
+        self.list_CO = []
 
-		for curr_ch in struc.chainList:
+        for curr_ch in struc.chainList:
 
-			self.sub_struct = struc.chain(curr_ch)
-			cm_intra = ContactMap_intra_grid(self.sub_struct,cutoff)
-			counter,SUM = 0,0
+            self.sub_struct = struc.chain(curr_ch)
+            cm_intra = ContactMap_intra_grid(self.sub_struct,cutoff)
+            counter,SUM = 0,0
 
-			for i in range(len(cm_intra.getResID)):
-				for j in range(i+1,len(cm_intra.getResID)):
-					if cm_intra.mtx[i, j] < cutoff:
-						SUM += abs(i-j)
-						counter += 1
+            for i in range(len(cm_intra._resArray)):
+                for j in range(i+1,len(cm_intra._resArray)):
+                    if cm_intra.mtx[i, j] < cutoff:
+                        SUM += abs(i-j)
+                        counter += 1
 
-			self.list_CO.append([struc_name,curr_ch,'{:.2f}'.format(float(SUM)/counter),self.contiguous])
+            self.list_CO.append([struc_name,curr_ch,'{:.2f}'.format(float(SUM)/counter),self.contiguous])
 
-	def __iter__(self):
-		for item in self.list_CO:
-			yield item
+    def __iter__(self):
+        for item in self.list_CO:
+            yield item
 
-	@property
-	def contiguous(self):
-		if not self._contiguous:
-			self._contiguous = True
-			trace_list = [atom for atom in self.sub_struct.trace]
-			for i in range(1,len(trace_list)):
-				curr_atom = trace_list[i]
-				prev_atom = trace_list[i-1]
-				dist = minDist([curr_atom],[prev_atom])
-				if float(dist) > 4.0:
-					self._contiguous = False
-					break
-		return self._contiguous
+    @property
+    def contiguous(self):
+        if not self._contiguous:
+            self._contiguous = True
+            trace_list = [atom for atom in self.sub_struct.trace]
+            for i in range(1,len(trace_list)):
+                curr_atom = trace_list[i]
+                prev_atom = trace_list[i-1]
+                dist = minDist([curr_atom],[prev_atom])
+                if float(dist) > 4.0:
+                    self._contiguous = False
+                    break
+        return self._contiguous
 
 
 class interfaceBoolList(object):
