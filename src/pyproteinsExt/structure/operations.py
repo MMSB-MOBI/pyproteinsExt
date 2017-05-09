@@ -4,9 +4,9 @@ import pyproteins.sequence.msa
 import pyproteins.alignment.nw_custom
 import pyproteins.sequence.peptide
 
+import math
 import numpy
 import subprocess
-import re
 
 import xml.etree.ElementTree
 
