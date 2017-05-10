@@ -70,8 +70,8 @@ class ContactMap(object):
 		return Cell(self.rl[x], self.cl[y], self.mtx[x, y])
 
 	def __str__(self):
-		print 'Contact map ' + str(len(self.rl)) + 'x' + str(len(self.cl)) + '\n'
-		asString = '		' + ''.join(["%9s" % r for r in self.cl]) + '\n'
+		asString = 'Contact map ' + str(len(self.rl)) + 'x' + str(len(self.cl)) + '\n'
+		asString += '\t\t' + ''.join(["%9s" % r for r in self.cl]) + '\n'
 		for i, row in enumerate(self.mtx):
 			asString += "%9s" % self.rl[i]
 			asString += ' '.join(["%9.1f" % d for d in row])
@@ -131,8 +131,8 @@ class ContactMap_intra(object):
 		return Cell(self.l[x], self.l[y], self.mtx[x, y])
 
 	def __str__(self):
-		print 'Contact map intra ' + str(len(self.l)) + 'x' + str(len(self.l)) + '\n'
-		asString = '		' + ''.join(["%9s" % r for r in self.l]) + '\n'
+		asString = 'Contact map intra ' + str(len(self.l)) + 'x' + str(len(self.l)) + '\n'
+		asString += '\t\t' + ''.join(["%9s" % r for r in self.l]) + '\n'
 		for i, row in enumerate(self.mtx):
 			asString += "%9s" % self.l[i]
 			asString += ' '.join(["%9.1f" % d for d in row])
@@ -168,8 +168,8 @@ class ContactMap_intra_grid(object):
 		return Cell(self._resArray[x], self._resArray[y], self.mtx[x, y])
 
 	def __str__(self):
-		print 'Contact map grid ' + str(len(self._resArray)) + 'x' + str(len(self._resArray)) + '\n'
-		asString = '\t\t' + ''.join(["%9s" % r for r in self._resArray]) + '\n'
+		asString = 'Contact map intra grid ' + str(len(self._resArray)) + 'x' + str(len(self._resArray)) + '\n'
+		asString += '\t\t' + ''.join(["%9s" % r for r in self._resArray]) + '\n'
 		for i, row in enumerate(self.mtx):
 			asString += "%9s" % self._resArray[i]
 			asString += ' '.join(["%9.1f" % d for d in row])
