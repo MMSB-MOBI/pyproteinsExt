@@ -4,9 +4,7 @@ import pyproteins.sequence.msa
 import pyproteins.alignment.nw_custom
 import pyproteins.sequence.peptide
 
-import math
-import numpy
-import subprocess
+import math,numpy,subprocess
 
 import xml.etree.ElementTree
 
@@ -113,17 +111,14 @@ class ContactMap_intra(object):
 
 		self.l = [r.id for r in self._resArray]
 
-		self.list_dist = []
-		self.counter_mindist, self.counter_infcutoff = 0, 0
+		self.counter_infcutoff = 0
 
 		for i in range(len(self._resArray)):
 			for j in range(i+1,len(self._resArray)):
 				self.mtx[i, j] = minDist(self._resArray[i], self._resArray[j])
-				self.counter_mindist += 1
 
 				if self.mtx[i, j] < cutoff:
 					self.counter_infcutoff += 1
-					self.list_dist.append(str(Cell(self.l[i], self.l[j], self.mtx[i, j])))
 
 	# matrix element accessor along with row/column label, mostly for inspection
 	def __getitem__(self, tup):
@@ -181,6 +176,8 @@ class ContactMap_intra_grid(object):
 		# PARSING
 		# ---
 
+		self.counter_atoms = 0
+
 		self.min_x,self.min_y,self.min_z = 9999999.99999,9999999.99999,9999999.99999
 		self.max_x,self.max_y,self.max_z = -9999999.99999,-9999999.99999,-9999999.99999
 
@@ -188,6 +185,8 @@ class ContactMap_intra_grid(object):
 			# ---
 			# GET MINIMUMS AND MAXIMUMS OF EACH COORDINATES X,Y,Z
 			# ---
+
+			self.counter_atoms += 1
 
 			self.min_x = atom.x if atom.x < self.min_x else self.min_x
 			self.min_y = atom.y if atom.y < self.min_y else self.min_y
@@ -256,6 +255,7 @@ class ContactMap_intra_grid(object):
 
 	def _calculate_distances(self):
 		self.dist_LIST = []
+		self.counter_dist = 0
 
 		for i in range(len(self.value_LIST)):
 			current = self.value_LIST[i][0]
@@ -265,9 +265,11 @@ class ContactMap_intra_grid(object):
 
 				for k in range(j+1,len(current)):
 					self.dist_LIST.append([[current[j],current[k]],euclidianDist(current[j],current[k])])
+					self.counter_dist += 1
 
 				for l in range(len(neighbors_flat_LIST)):
 					self.dist_LIST.append([[current[j],neighbors_flat_LIST[l]],euclidianDist(current[j],neighbors_flat_LIST[l])])
+					self.counter_dist += 1
 
 	def _build_ContactMap(self):
 		self.mtx = numpy.empty((len(self._resArray),len(self._resArray)),dtype=float)
