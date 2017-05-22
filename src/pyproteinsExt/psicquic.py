@@ -6,7 +6,7 @@ import pyproteinsExt.uniprot
 import json
 import os
 #from pkg_resources import resource_stream, Requirement
-
+#
 
 PSQ_FIELDS= ["idA", "idB", "altA", "altB", "aliasA", "aliasB", "interactionDetectionMethod", "firstAuthor", "pubid", "taxidA", "taxidB",
             "interactionTypes", "sourceDatabases", "interactionIdentifiers", "confidenceScore", "complexExpansion", "biologicalRoleA"

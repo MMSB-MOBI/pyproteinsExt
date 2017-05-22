@@ -40,6 +40,12 @@ class Cell(object):
     def __str__(self):
         return '(' + self.iLabel + ', ' + self.jLabel + ') : ' + str(self.value)
 
+
+class MeshMap(object):
+    def __init__(self, s1, s2):
+        pass
+
+
 class ContactMap(object):
     def __init__(self, s1, s2):
         self.mtx = numpy.zeros((s1.residueNumber, s2.residueNumber))

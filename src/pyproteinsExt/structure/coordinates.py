@@ -72,8 +72,7 @@ COLUMNS        DATA  TYPE    FIELD        DEFINITION
 
 class Parser(object):
     def __init__(self):
-        print 'TITI'
-        #pass
+        pass
 
     def load(self, **kwargs):
         structureObj = Structure();
@@ -133,6 +132,25 @@ class Structure(object):
         self._chainList = None
         self._residues = None
 
+    def __len__(self):
+        return len(self.data)
+
+
+    @property
+    def atomVectorize(self):
+        atomList = self.model[self.currModel - 1]
+        seqRes = []
+        chainID = []
+        x = []
+        y = []
+        z = []
+        for a in atomList:
+            seqRes.append(a.seqRes)
+            chainID.append(a.chainID)
+            x.append(a.x)
+            y.append(a.y)
+            z.append(a.z)
+        return (x, y, z, seqRes, chainID)
 
     # Browse model and create a new pdbObject with a sinlge model that satifise the provided conditions
     # Eg: ask for the 1st model w/ oligomeric composition chain=["A","B","C"]
@@ -213,7 +231,7 @@ class Structure(object):
             if kwargs['nocenter']:
                 centeringBool = False
 
-        if 'U' not in kwargs and (not alpha or not beta or not gamma):
+        if 'U' not in kwargs and ('alpha' not in kwargs or 'beta' not in kwargs or 'gamma' not in kwargs):
             raise ValueError("Specify a 3x3 rotation matrix or alpha,beta,angle for rotation around X,Y and Z axis");
 
 
@@ -449,6 +467,10 @@ class Residue(object):
         return self.data[0].resName
 
     @property
+    def seqRes(self):
+        return self.data[0].seqRes
+
+    @property
     def num(self):
         return self.data[0].resSeq
 
@@ -481,7 +503,7 @@ class Atom(object):
             self.altLoc= buf[16]
             self.resName=buf[17:20].replace(" ", "")
             self.chainID=buf[21]
-            self.resSeq=int(buf[22:26]) # Not sure
+            self.resSeq=buf[22:26] # Not sure
             self.iCode=buf[26]
             self.x=float(buf[30:38])
             self.y=float(buf[38:46])
@@ -492,8 +514,15 @@ class Atom(object):
             self.charge     = buf[78:80].replace(" ", "") if bufLen > 78 else None
 
     @property
+    def seqRes(self):
+        return str(self.resSeq) + str(self.iCode)
+
+    @property
     def coordinates(self):
         return [self.x, self.y, self.z]
+    @property
+    def toVector(self):
+        return [self.x, self.y, self.z, self.resSeq + self.iCode, self.chainID]
 
     def __hash__(self):
         tup = (self.recordName, self.serial, self.altLoc, self.resName, self.chainID, self.resSeq, self.iCode, self.x, self.y, self.z, self.occupancy, self.tempFactor, self.element, self.charge)
