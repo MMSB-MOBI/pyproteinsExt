@@ -5,42 +5,42 @@ import math
 import os
 
 aaCode = {
-    'ALA' : 'A',
-    'ARG' : 'R',
-    'ASN' : 'N',
-    'ASP' : 'D',
-    'GLU' : 'E',
-    'GLN' : 'Q',
-    'GLY' : 'G',
-    'CYS' : 'C',
-    'LYS' : 'K',
-    'MET' : 'M',
-    'LEU' : 'L',
-    'ILE' : 'I',
-    'MET' : 'M',
-    'PRO' : 'P',
-    'SER' : 'S',
-    'THR' : 'T',
-    'TRP' : 'W',
-    'TRY' : 'W',
-    'TYR' : 'Y',
-    'PHE' : 'F',
-    'VAL' : 'V',
-    'MSE' : 'M'
+	'ALA' : 'A',
+	'ARG' : 'R',
+	'ASN' : 'N',
+	'ASP' : 'D',
+	'GLU' : 'E',
+	'GLN' : 'Q',
+	'GLY' : 'G',
+	'CYS' : 'C',
+	'LYS' : 'K',
+	'MET' : 'M',
+	'LEU' : 'L',
+	'ILE' : 'I',
+	'MET' : 'M',
+	'PRO' : 'P',
+	'SER' : 'S',
+	'THR' : 'T',
+	'TRP' : 'W',
+	'TRY' : 'W',
+	'TYR' : 'Y',
+	'PHE' : 'F',
+	'VAL' : 'V',
+	'MSE' : 'M'
 }
 
 def translate(x):
-    global aaCode
+	global aaCode
 
-    for k,v in aaCode.iteritems():
-        if x == v:
-            return k
-        elif  x == k:
-            return v
+	for k,v in aaCode.iteritems():
+		if x == v:
+			return k
+		elif  x == k:
+			return v
 
-    if len(x) == 1:
-        return 'UNK'
-    return 'X'
+	if len(x) == 1:
+		return 'UNK'
+	return 'X'
 
 '''
 GL 09/03/2017
@@ -50,74 +50,74 @@ GL 09/03/2017
 
 ''' PDB format reminder
 
-COLUMNS        DATA  TYPE    FIELD        DEFINITION
+COLUMNS		DATA  TYPE	FIELD		DEFINITION
 -------------------------------------------------------------------------------------
- 1 -  6        Record name   "ATOM  "
- 7 - 11        Integer       serial       Atom  serial number.
-13 - 16        Atom          name         Atom name.
-17             Character     altLoc       Alternate location indicator.
-18 - 20        Residue name  resName      Residue name.
-22             Character     chainID      Chain identifier.
-23 - 26        Integer       resSeq       Residue sequence number.
-27             AChar         iCode        Code for insertion of residues.
-31 - 38        Real(8.3)     x            Orthogonal coordinates for X in Angstroms.
-39 - 46        Real(8.3)     y            Orthogonal coordinates for Y in Angstroms.
-47 - 54        Real(8.3)     z            Orthogonal coordinates for Z in Angstroms.
-55 - 60        Real(6.2)     occupancy    Occupancy.
-61 - 66        Real(6.2)     tempFactor   Temperature  factor.
-77 - 78        LString(2)    element      Element symbol, right-justified.
-79 - 80        LString(2)    charge       Charge  on the atom.
+ 1 -  6		Record name   "ATOM  "
+ 7 - 11		Integer	   serial	   Atom  serial number.
+13 - 16		Atom		  name		 Atom name.
+17			 Character	 altLoc	   Alternate location indicator.
+18 - 20		Residue name  resName	  Residue name.
+22			 Character	 chainID	  Chain identifier.
+23 - 26		Integer	   resSeq	   Residue sequence number.
+27			 AChar		 iCode		Code for insertion of residues.
+31 - 38		Real(8.3)	 x			Orthogonal coordinates for X in Angstroms.
+39 - 46		Real(8.3)	 y			Orthogonal coordinates for Y in Angstroms.
+47 - 54		Real(8.3)	 z			Orthogonal coordinates for Z in Angstroms.
+55 - 60		Real(6.2)	 occupancy	Occupancy.
+61 - 66		Real(6.2)	 tempFactor   Temperature  factor.
+77 - 78		LString(2)	element	  Element symbol, right-justified.
+79 - 80		LString(2)	charge	   Charge  on the atom.
 
 '''
 
 class Parser(object):
-    def __init__(self):
-        pass
+	def __init__(self):
+		pass
 
-    def load(self, **kwargs):
-        structureObj = Structure();
+	def load(self, **kwargs):
+		structureObj = Structure();
 
-        def _read(stream):
-            currentAtomList = structureObj.pop();
-            newModel = False
-            for l in stream:
-                #print ">>" + l + "<<"
-                if l.startswith("ATOM "):
-                    if newModel:
-                        currentAtomList = structureObj.pop();
-                        newModel = False
-                    currentAtomList.append(Atom(string=l))
-                elif l.startswith("ENDMDL"):
-                    newModel = True
+		def _read(stream):
+			currentAtomList = structureObj.pop();
+			newModel = False
+			for l in stream:
+				#print ">>" + l + "<<"
+				if l.startswith("ATOM "):
+					if newModel:
+						currentAtomList = structureObj.pop();
+						newModel = False
+					currentAtomList.append(Atom(string=l))
+				elif l.startswith("ENDMDL"):
+					newModel = True
 
 
-        if 'file' in kwargs:
-            with open(kwargs['file'], 'r') as f:
-                _read(f)
+		if 'file' in kwargs:
+			with open(kwargs['file'], 'r') as f:
+				_read(f)
 
-        if 'stream' in kwargs:
-            #print kwargs['stream'] + "<--"
-            _read(kwargs['stream'].splitlines(True))
+		if 'stream' in kwargs:
+			#print kwargs['stream'] + "<--"
+			_read(kwargs['stream'].splitlines(True))
 
-        if len(structureObj.model[0]) == 0:
-            raise ValueError("Empty coordinates")
+		if len(structureObj.model[0]) == 0:
+			raise ValueError("Empty coordinates")
 
-        # Assign a name
-        if not structureObj.name:
-            if 'file' in kwargs:
-                base = os.path.basename(kwargs['file'])
-                structureObj.name = os.path.splitext(base)[0]
+		# Assign a name
+		if not structureObj.name:
+			if 'file' in kwargs:
+				base = os.path.basename(kwargs['file'])
+				structureObj.name = os.path.splitext(base)[0]
 
-        if not structureObj.name:
-            structureObj.name = "a protein"
+		if not structureObj.name:
+			structureObj.name = "a protein"
 
-        return structureObj
+		return structureObj
 
 
 
 class Model(object):
-    def init(self):
-        pass
+	def init(self):
+		pass
 
 
 
@@ -134,7 +134,6 @@ class Structure(object):
 
     def __len__(self):
         return len(self.data)
-
 
     @property
     def atomVectorize(self):
@@ -192,39 +191,44 @@ class Structure(object):
             'seq' : self.fasta
         }
 
+	@property
+	def getResID(self):
+		if not self._resID:
+			self._resID = [residue.data[0].getResID for residue in self.byres()]
+		return self._resID
+
 # move a structure along a vector
-    def nudge(self, C):
-        V = [ numpy.array( d.coordinates ) for d in self.atomRecord ]
-        V += C
-        for i, a in enumerate (V):
-                self.model[self.currModel - 1][i].x = V[i,0]
-                self.model[self.currModel - 1][i].y = V[i,1]
-                self.model[self.currModel - 1][i].z = V[i,2]
+	def nudge(self, C):
+		V = [ numpy.array( d.coordinates ) for d in self.atomRecord ]
+		V += C
+		for i, a in enumerate (V):
+				self.model[self.currModel - 1][i].x = V[i,0]
+				self.model[self.currModel - 1][i].y = V[i,1]
+				self.model[self.currModel - 1][i].z = V[i,2]
 
 
-    def centerOrigin(self):
-        V = [ numpy.array( d.coordinates ) for d in self.atomRecord ]
-    # move to centroid
-        C = sum(V)/len(V)
-        print C
-        V -= C
-        for i, a in enumerate (V):
-            #print
-            self.model[self.currModel - 1][i].x = V[i,0]
-            self.model[self.currModel - 1][i].y = V[i,1]
-            self.model[self.currModel - 1][i].z = V[i,2]
+	def centerOrigin(self):
+		V = [ numpy.array( d.coordinates ) for d in self.atomRecord ]
+	# move to centroid
+		C = sum(V)/len(V)
+		print C
+		V -= C
+		for i, a in enumerate (V):
+			#print
+			self.model[self.currModel - 1][i].x = V[i,0]
+			self.model[self.currModel - 1][i].y = V[i,1]
+			self.model[self.currModel - 1][i].z = V[i,2]
 
-        return C
+		return C
 
 
 
-    def rotate(self, **kwargs):
+	def rotate(self, **kwargs):
 # 1st we move centroid to origin
 # 2nd we rotate
 # 3rd we move centroid back to original
 
 # U=RotationMatrix  OR (alpha=0, beta=0, gamma=0)
-
         centeringBool = True
 
         if ('nocenter' in kwargs):
@@ -413,58 +417,38 @@ class Structure(object):
         # All tree relationship could then be mapped to set operation on atoms lists
         #
         #        http://pyparsing.wikispaces.com/
-'''
-        buf = []
-        if 'chainID' in kwargs:
-            for atom in self.bufferSelection:#self.model[currModel - 1]:
-                if atom.chainID == kwargs['chainID']:
-                    buf.append(atom)
-        elif 'resName' in kwargs:
-            p = re.compile('my pattern')
-            for atom in self.bufferSelection:#self.model[currModel - 1]:
-                if p.match(atom.resName):
-                    buf.append(atom)
-
-
-        self.bufferSelection = buf
-        return self
-'''
-
-    #def push(self, **kwargs):
-    #    if 'atomRecord' in kwargs:
-
 
 class Residue(object):
-    def __init__(self, atomArray):
-        self.data = atomArray
+	def __init__(self, atomArray):
+		self.data = atomArray
 
-    def __len__(self):
-        return len(self.data)
+	def __len__(self):
+		return len(self.data)
 
-    def __repr__(self):
-        return ''.join([ str(a) for a in self.data ])
+	def __repr__(self):
+		return ''.join([ str(a) for a in self.data ])
 
-    def __getitem__(self, key):
-        return self.data[key]
+	def __getitem__(self, key):
+		return self.data[key]
 
-    def __iter__(self):
-        for d in self.data:
-            yield d
-        #        return self.data
-    def __str__(self):
-        return "%3s %4d%c %s" %(self.name, self.num, self.iCode,self.chain)
+	def __iter__(self):
+		for d in self.data:
+			yield d
+		#		return self.data
+	def __str__(self):
+		return "%3s %4d%c %s" %(self.name, self.num, self.iCode,self.chain)
 
-    @property
-    def fasta(self):
-        return translate(self.data[0].resName)
+	@property
+	def fasta(self):
+		return translate(self.data[0].resName)
 
-    @property
-    def id(self):
-        return self.data[0].resName + str(self.data[0].resSeq) + ':' + self.data[0].chainID
+	@property
+	def id(self):
+		return self.data[0].resName + str(self.data[0].resSeq) + ':' + self.data[0].chainID
 
-    @property
-    def name(self):
-        return self.data[0].resName
+	@property
+	def name(self):
+		return self.data[0].resName
 
     @property
     def seqRes(self):
@@ -474,20 +458,20 @@ class Residue(object):
     def num(self):
         return self.data[0].resSeq
 
-    @property
-    def chain(self):
-        return self.data[0].chainID
+	@property
+	def chain(self):
+		return self.data[0].chainID
 
-    @property
-    def iCode(self):
-        return self.data[0].iCode
+	@property
+	def iCode(self):
+		return self.data[0].iCode
 
-    @property
-    def hasCalpha(self):
-        for a in self:
-            if a.name == "CA":
-                return True
-        return False
+	@property
+	def hasCalpha(self):
+		for a in self:
+			if a.name == "CA":
+				return True
+		return False
 
 class Atom(object):
     def __init__(self, **kwargs):
@@ -520,9 +504,15 @@ class Atom(object):
     @property
     def coordinates(self):
         return [self.x, self.y, self.z]
+
     @property
     def toVector(self):
         return [self.x, self.y, self.z, self.resSeq + self.iCode, self.chainID]
+
+    @property
+    def getResID(self):
+    #   return self.resName + str(self.resSeq) + ':' + self.chainID + ':' + self.iCode
+        return self.resName + self.seqRes + ':' + self.chainID
 
     def __hash__(self):
         tup = (self.recordName, self.serial, self.altLoc, self.resName, self.chainID, self.resSeq, self.iCode, self.x, self.y, self.z, self.occupancy, self.tempFactor, self.element, self.charge)
@@ -538,6 +528,3 @@ class Atom(object):
         if self.occupancy:
             return "%-5s%5d %4s%s%4s %s%4s%s   %8.3f%8.3f%8.3f%6.2f                 " % (self.recordName, self.serial, self.name, self.altLoc, self.resName, self.chainID, self.resSeq,self.iCode, self.x, self.y, self.z, self.occupancy)
         return "%-5s%5d %4s%s%4s %s%4s%s   %8.3f%8.3f%8.3f                          " % (self.recordName, self.serial, self.name, self.altLoc, self.resName, self.chainID, self.resSeq,self.iCode, self.x, self.y, self.z)
-
-
-
