@@ -736,8 +736,9 @@ class Entry:
                 return False
         return True
 
-    def isMatrisome(self, annot=False):
-        matrisomeTerm = self.matrisome.get(uniprotID=self['uniprotID'])
+    def isMatrisome(self, annot=False, truncateIsoform=True):
+        uniprotID = re.sub('-[\d]+$',"", self['uniprotID']) if truncateIsoform else self['uniprotID']
+        matrisomeTerm = self.matrisome.get(uniprotID=uniprotID)
         if annot:
             self['matrisomeTerm'] = matrisomeTerm[0]['Category'] + ":" + matrisomeTerm[0]['Division'] if matrisomeTerm else 'NA'
         if matrisomeTerm:

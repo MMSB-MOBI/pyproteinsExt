@@ -131,9 +131,23 @@ class Structure(object):
         self.bufferSelection = []
         self._chainList = None
         self._residues = None
+        self._resID = None
 
     def __len__(self):
         return len(self.data)
+
+    @property
+    def atomDictorize(self):
+        atomList = self.model[self.currModel - 1]
+        (x, y, z, seqRes, chainID, resName, name) = self.atomVectorize;
+        return { "x" : x,
+                 "y" : y,
+                 "z" : z,
+                 "seqRes" : seqRes,
+                 "chainID" : chainID,
+                 "resName" : resName,
+                 "name" : name
+                }
 
     @property
     def atomVectorize(self):
@@ -143,14 +157,23 @@ class Structure(object):
         x = []
         y = []
         z = []
+        resName = []
+        name = []
         for a in atomList:
             seqRes.append(a.seqRes)
             chainID.append(a.chainID)
             x.append(a.x)
             y.append(a.y)
             z.append(a.z)
-        return (x, y, z, seqRes, chainID)
+            name.append(a.name)
+            resName.append(a.resName)
+        return (x, y, z, seqRes, chainID, resName, name)
 
+    @property
+    def getResID(self):
+        if not self._resID:
+            self._resID = [residue.data[0].getResID for residue in self.byres()]
+        return self._resID
     # Browse model and create a new pdbObject with a sinlge model that satifise the provided conditions
     # Eg: ask for the 1st model w/ oligomeric composition chain=["A","B","C"]
     def modelReduce(self, **kwargs):
@@ -191,12 +214,6 @@ class Structure(object):
             'seq' : self.fasta
         }
 
-	@property
-	def getResID(self):
-		if not self._resID:
-			self._resID = [residue.data[0].getResID for residue in self.byres()]
-		return self._resID
-
 # move a structure along a vector
 	def nudge(self, C):
 		V = [ numpy.array( d.coordinates ) for d in self.atomRecord ]
@@ -223,11 +240,10 @@ class Structure(object):
 
 
 
-	def rotate(self, **kwargs):
+    def rotate(self, **kwargs):
 # 1st we move centroid to origin
 # 2nd we rotate
 # 3rd we move centroid back to original
-
 # U=RotationMatrix  OR (alpha=0, beta=0, gamma=0)
         centeringBool = True
 
@@ -237,7 +253,6 @@ class Structure(object):
 
         if 'U' not in kwargs and ('alpha' not in kwargs or 'beta' not in kwargs or 'gamma' not in kwargs):
             raise ValueError("Specify a 3x3 rotation matrix or alpha,beta,angle for rotation around X,Y and Z axis");
-
 
         V = [ numpy.array( d.coordinates ) for d in self.atomRecord ]
 
@@ -419,36 +434,36 @@ class Structure(object):
         #        http://pyparsing.wikispaces.com/
 
 class Residue(object):
-	def __init__(self, atomArray):
+    def __init__(self, atomArray):
 		self.data = atomArray
 
-	def __len__(self):
+    def __len__(self):
 		return len(self.data)
 
-	def __repr__(self):
-		return ''.join([ str(a) for a in self.data ])
+    def __repr__(self):
+	   return ''.join([ str(a) for a in self.data ])
 
-	def __getitem__(self, key):
+    def __getitem__(self, key):
 		return self.data[key]
 
-	def __iter__(self):
+    def __iter__(self):
 		for d in self.data:
 			yield d
-		#		return self.data
-	def __str__(self):
-		return "%3s %4d%c %s" %(self.name, self.num, self.iCode,self.chain)
 
-	@property
-	def fasta(self):
-		return translate(self.data[0].resName)
+    def __str__(self):
+        return "%3s %4d%c %s" %(self.name, self.num, self.iCode,self.chain)
 
-	@property
-	def id(self):
-		return self.data[0].resName + str(self.data[0].resSeq) + ':' + self.data[0].chainID
+    @property
+    def fasta(self):
+        return translate(self.data[0].resName)
 
-	@property
-	def name(self):
-		return self.data[0].resName
+    @property
+    def id(self):
+        return self.data[0].resName + str(self.data[0].resSeq) + ':' + self.data[0].chainID
+
+    @property
+    def name(self):
+        return self.data[0].resName
 
     @property
     def seqRes(self):
