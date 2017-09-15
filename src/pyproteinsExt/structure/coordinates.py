@@ -491,11 +491,10 @@ class Residue(object):
 class Atom(object):
     def __init__(self, **kwargs):
         if 'string' in kwargs:
-            buf=kwargs['string']
+            buf=kwargs['string'].rstrip()
             bufLen = len(buf)
-            if bufLen < 55:
+            if bufLen < 54:
                 raise TypeError("Unexpected atom record length \"" + str(bufLen) + "\" on input at \n" + buf)
-
             self.recordName=buf[0:6].replace(" ", "")
             self.serial=int(buf[6:11])
             self.name=buf[12:16].replace(" ", "")
