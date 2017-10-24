@@ -134,7 +134,18 @@ class Structure(object):
         self._resID = None
 
     def __len__(self):
-        return len(self.data)
+        return len(self.model[self.currModel - 1])
+
+    def setCoordinateFromDictorize(self, dictorizedSelf):
+        atomList = self.model[self.currModel - 1]
+        #print atomList
+        #print len(atomList)
+        #print len(dictorizedSelf['x'])
+        for i in range(len(atomList)):
+    #        print i
+            self.model[self.currModel - 1][i].x = dictorizedSelf['x'][i]
+            self.model[self.currModel - 1][i].y = dictorizedSelf['y'][i]
+            self.model[self.currModel - 1][i].z = dictorizedSelf['z'][i]
 
     @property
     def atomDictorize(self):
@@ -319,7 +330,7 @@ class Structure(object):
         for n, model in enumerate(self.model):
             self.currModel = n + 1
             asString += ''.join([ str(a) if str(a).endswith("\n") else str(a) + '\n' for a in self.atomRecord ])
-            asString += "ENDMDL\n"
+            #asString += "ENDMDL\n"
         return asString
 
     def clone(self):

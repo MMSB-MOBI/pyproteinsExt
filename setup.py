@@ -15,18 +15,18 @@ from setuptools import setup
 
 setup(
   name = 'pyproteinsExt',
-  version = '0.38',
+  version = '0.4',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
-  author = 'Guillaume Launay',
-  author_email = 'pitooon@gmail.com',
+  author = 'Guillaume Launay, Juliette Martin',
+  author_email = 'pitooon@gmail.com, juliette.martin@ibcp.fr',
   url = 'https://github.com/glaunay/pyproteinsExt', # use the URL to the github repo
   packages=find_packages('src'),
   package_dir={'': 'src'},
   include_package_data=True,
   zip_safe=False,
   py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-  download_url = 'https://github.com/glaunay/pyproteinsExt/tarball/0.22', # I'll explain this in a second
+  download_url = 'https://github.com/glaunay/pyproteinsExt/tarball/0.4', # I'll explain this in a second
   keywords = ['protein', 'sequence'], # arbitrary keywords
   classifiers = [],
   install_requires=[
