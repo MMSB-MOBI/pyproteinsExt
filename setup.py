@@ -18,7 +18,7 @@ setup(
   version = '0.5',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
-  author = 'Guillaume Launay, Juliette Martin',
+  author = 'Guillaume Launay, Juliette Martin et al',
   author_email = 'pitooon@gmail.com, juliette.martin@ibcp.fr',
   url = 'https://github.com/glaunay/pyproteinsExt', # use the URL to the github repo
   packages=find_packages('src'),
