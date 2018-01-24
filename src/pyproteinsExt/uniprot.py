@@ -11,7 +11,8 @@ from os.path import expanduser
 PfamEntrySet = pfam.EntrySet()
 
 
-
+def proxySetting(**param):
+    pyproteins.container.Core.proxySetting(param)
 
 '''
 
@@ -76,6 +77,7 @@ class Entry(pyproteins.container.Core.Container):
         self.xmlHandler = self.getXmlHandler()
 
         self.name = self.xmlHandler.find('name').text
+        self.geneName = self.xmlHandler.find('gene').find('name').text if self.xmlHandler.find('gene') else None
         self.parseKW()
         self.parseGO()
         self.parseLineage()

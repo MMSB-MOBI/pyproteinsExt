@@ -452,7 +452,7 @@ class Residue(object):
 		return len(self.data)
 
     def __repr__(self):
-	   return ''.join([ str(a) for a in self.data ])
+	   return '\n'.join([ str(a) for a in self.data ])
 
     def __getitem__(self, key):
 		return self.data[key]
@@ -462,7 +462,13 @@ class Residue(object):
 			yield d
 
     def __str__(self):
-        return "%3s %4d%c %s" %(self.name, self.num, self.iCode,self.chain)
+        return "%3s %4d%c %s" %(self.name, self.num, self.iCode, self.chain)
+
+    def __eq__(self, other):
+        return (self.chain, self.seqRes) == (other.chain, other.seqRes)
+
+    def __ne__(self, other):
+        return not(self == other)
 
     @property
     def fasta(self):
@@ -484,20 +490,27 @@ class Residue(object):
     def num(self):
         return self.data[0].resSeq
 
-	@property
-	def chain(self):
-		return self.data[0].chainID
+    @property
+    def chain(self):
+        return self.data[0].chainID
 
-	@property
-	def iCode(self):
-		return self.data[0].iCode
+    @property
+    def iCode(self):
+        return self.data[0].iCode
 
-	@property
-	def hasCalpha(self):
-		for a in self:
-			if a.name == "CA":
-				return True
-		return False
+    @property
+    def seqRes(self):
+        return self.data[0].seqRes
+
+    @property
+    def hasCalpha(self):
+        for a in self:
+            if a.name == "CA":
+                return True
+        return False
+
+    def asPdbRecord(self):
+        return self.__repr__()
 
 class Atom(object):
     def __init__(self, **kwargs):
