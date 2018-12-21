@@ -1,19 +1,15 @@
-#import urllib2
-from urllib.request import urlopen
+import urllib2
 from bs4 import BeautifulSoup
 import re
 import pyproteins.container.customCollection
 import pyproteins.container.Core
-import pyproteinsExt.pfam as pfam
-import json
+import pfam
 
 from os.path import expanduser
 
 
 PfamEntrySet = pfam.EntrySet()
 
-def getPfamCollection ():
-    return PfamEntrySet
 
 def proxySetting(**param):
     pyproteins.container.Core.proxySetting(param)
@@ -65,13 +61,7 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         if 'collectionPath' in kwargs:
             cachePath = kwargs['collectionPath']
 
-        super().__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
-
-    def serialize(self, **kwargs):
-        print ("serializing uniprot collection")
-        super().serialize(kwargs)
-        print ("serializing pfam collection")
-        PfamEntrySet.serialize(kwargs)
+        super(EntrySet, self).__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
 
 class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fileName=None):
@@ -80,17 +70,13 @@ class Entry(pyproteins.container.Core.Container):
         c_id = capture(id)
         if not c_id:
             raise ValueError('could not extract uniprot identifier from provided id parameter ' + id)
-        super().__init__(c_id, url=baseUrl + str(c_id) + '.xml', fileName=fileName)
+        super(Entry, self).__init__(c_id, url=baseUrl + str(c_id) + '.xml', fileName=fileName)
         #pyproteins.container.Core.Container.__init__(self, id, url=baseUrl + str(id) + '.xml', fileName=fileName)
 
-        #print id + '-->' + str(fileName)
 
         self.xmlHandler = self.getXmlHandler()
-        if not self.xmlHandler:
-            return None
-        
+
         self.name = self.xmlHandler.find('name').text
-        self.fullName = self.xmlHandler.find('fullName').text
         self.geneName = self.xmlHandler.find('gene').find('name').text if self.xmlHandler.find('gene') else None
         self.parseKW()
         self.parseGO()
@@ -112,22 +98,6 @@ class Entry(pyproteins.container.Core.Container):
 
     def __deepcopy__(self, memo):
         return self
-
-    def __eq__ (self, other):
-        return self.id == other.id
-
-    def toJSON(self):
-        asDict = {}
-        for k in self.__dict__.keys():
-            if k == 'xmlHandler':
-                continue
-            if k != 'GO':
-                continue
-            asDict[str(k)] = getattr(self, k)
-            print(asDict)
-        return json.dumps(asDict)#,#lambda o: o.__dict__, 
-            #sort_keys=True)#, indent=4)
-
 
     def parseAC(self):
         self.AC = [e.text for e in self.xmlHandler.find_all('accession')]
@@ -177,7 +147,7 @@ class Entry(pyproteins.container.Core.Container):
             try :
                 self.domains = PfamEntrySet.map(uniprotID=self.id)
             except ValueError as msg:
-                print ("Could not bind uniprot to its pfam ressources reason\n" + str(msg))
+                print "Could not bind uniprot to its pfam ressources reason\n" + str(msg)
 
     def parseSse(self):
         self.sse = []
@@ -258,7 +228,7 @@ class Entry(pyproteins.container.Core.Container):
             elif r:
                 domain = { 'outOfBounds' : 'Nter' }
             else:
-                print ("Not a hinge a Cter or a Nter at " + str(i) + " in " + self.id)
+                print "Not a hinge a Cter or a Nter at " + str(i) + " in " + self.id
         return Position(i, domain=domain, sse=self._getSse(i), letter=self.sequence[i])
 
 
@@ -291,26 +261,6 @@ class Entry(pyproteins.container.Core.Container):
             if d.begin <= i <= d.end:
                 return d.type
         return "coil"
-
-# Custom encoder for uniprot entity
-class EntryEncoder(json.JSONEncoder):
-    def default(self, entryObj):
-        if isinstance(entryObj, pyproteins.container.Core.Container):
-            container = {}
-            for k, v in entryObj.__dict__.items():
-                if k == 'name':
-                    container[k] = v
-                if k == 'GO':
-                    container[k] = [ go.__dict__ for go in v ]
-                if k == 'id':
-                    container[k] = v
-                if k == 'geneName':
-                    container[k] = v
-                if k == 'fullName':
-                    container[k] = v
-            return container
-        # Error
-        return json.JSONEncoder.default(self, entryObj)
 
 
 class Position ():

@@ -10,7 +10,7 @@ def strip(fileName):
 
 class EntrySet(pyproteins.container.customCollection.EntrySet, object):
     def __init__(self):
-        super().__init__(collectionPath="/Users/guillaumelaunay/work/data/pfam", constructor=Entry, typeCheck=None, indexer=strip)
+        super(EntrySet, self).__init__(collectionPath="/Users/guillaumelaunay/work/data/pfam", constructor=Entry, typeCheck=None, indexer=strip)
 
     def map(self, uniprotID=None):
         if uniprotID:
@@ -21,8 +21,7 @@ class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="http://pfam.xfam.org/protein/", fileName=None):
         if not id:
             raise TypeError('identifier is empty')
-        #super(Entry, self).__init__(id, url=baseUrl + str(id) + '?output=xml', fileName=fileName)
-        super().__init__(id, url=baseUrl + str(id) + '?output=xml', fileName=fileName)
+        super(Entry, self).__init__(id, url=baseUrl + str(id) + '?output=xml', fileName=fileName)
         #pyproteins.container.Core.Container.__init__(self, id, url=baseUrl + str(id) + '?output=xml', fileName=fileName)
         self._parser()
     #@property
@@ -53,7 +52,7 @@ class Match():
             self.id = xmlHandler['id']
             self.accession = xmlHandler['accession']
             self.type = xmlHandler['type']
-            self.locations = [ { k : v  for e in xmlHandler.find_all('location') for k, v in e.attrs.items()} ]
+            self.locations = [ { k : v  for e in xmlHandler.find_all('location') for k, v in e.attrs.iteritems()} ]
 
     def __repr__(self):
         string = self.id + " " + self.accession + " " + self.type + ":"

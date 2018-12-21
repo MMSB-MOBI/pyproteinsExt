@@ -1,4 +1,4 @@
-#import urllib2
+import urllib2
 from bs4 import BeautifulSoup
 import re
 import xml.etree.ElementTree as ET
@@ -76,9 +76,9 @@ class BIOGRID_DATUM(object):
         return d
 
 class BIOGRID(object):
-    def __init__(self, **kwargs):  #mapperUrl=BIOGRID_UNIPROT_MAPPER_URL, uniprotMapFile=None
+    def __init__(self, mapperUrl=BIOGRID_UNIPROT_MAPPER_URL):
         self.biogridMapper = BIOGRIDMAPPER()
-        self.loadBiogridMapper(**kwargs)
+        self.loadBiogridMapper()
         self.data = {}
 
     def __iter__(self):
@@ -103,24 +103,15 @@ class BIOGRID(object):
 
             return list(set([ mol[0][1] for datum in self for mol in datum.interactors if mol[0][0] == "uniprokb:" ]))
 
-    def readFile(self, fileName):
-        data = ''
-
-        with open(fileName, 'r') as f:
-            data = f.read()
-
-        self.load(data)
-
     # biogridordered keys is the output sequence of dump method
     def load(self, stream, type="biogridOrderedKeys"):
         if not stream:
-            print("You must provide a mitab input")
+            print "You must provide a mitab input"
             return
         bufferStr = []
 
         for line in stream.split("\n"):
             bufferStr.append(line)
-        print(len(bufferStr))
         self.tsvBiogridParser(bufferStr)
 
     def tsvBiogridParser(self, iBuffer):
@@ -129,7 +120,6 @@ class BIOGRID(object):
             record = rec.split("\t")
             key = record.pop()
             self.data[key] = {} # recover the biogrid interaction identifier as primary key
-            print(key)
             for l, y in zip(BIOGRID_ORDERED_JSON_KEYS, record):
              #   print '-->' + y
 
@@ -188,10 +178,10 @@ class BIOGRID(object):
             taxQueryList = [ tx for tx in taxonDict if taxid in taxonDict[tx] ]
 
         if not taxQueryList:
-            print (taxid + ' is not a supported Biogrid specie')
+            print taxid + ' is not a supported Biogrid specie'
             return
         else :
-            print (taxQueryList)
+            print taxQueryList
         # get the stuff
 
         for tx in taxQueryList :
@@ -207,10 +197,10 @@ class BIOGRID(object):
         try:
             response = urllib2.urlopen(url)
         except urllib2.HTTPError as error:
-            print (url + "\nHTTP ERROR " + str(error.code))
+            print url + "\nHTTP ERROR " + str(error.code)
             return None
         except urllib2.URLError as error:
-            print (url + "\n" + str(error.reason))
+            print url + "\n" + str(error.reason)
             return None
         raw = response.read()
         response.close()
@@ -283,10 +273,10 @@ class BIOGRID(object):
         try:
             response = urllib2.urlopen(url)
         except urllib2.HTTPError as error:
-            print (url + "\nHTTP ERROR " + str(error.code))
+            print url + "\nHTTP ERROR " + str(error.code)
             return None
         except urllib2.URLError as error:
-            print (url + "\n" + str(error.reason))
+            print url + "\n" + str(error.reason)
             return None
         raw = response.read()
         response.close()
@@ -299,34 +289,25 @@ class BIOGRID(object):
         # We expected dict w/ unique key per interactions
         return buf
 
-    def loadBiogridMapper(self, uniprotMapFile=None):
-
-        if uniprotMapFile:
-            with open(uniprotMapFile,'r') as f:
-                print ('reading uniprot mapping from ' + uniprotMapFile)
-                data = f.read()
-                self._loadMapper(data)
-            return
-
-        print ('reading uniprot mapping from ' + BIOGRID_UNIPROT_MAPPER_URL)
+    def loadBiogridMapper(self):
         try:
             response = urllib2.urlopen(BIOGRID_UNIPROT_MAPPER_URL)
 
         except urllib2.HTTPError as error:
-            print ("loadBioGridMapper url resolution failed")
-            print ("HTTP ERROR " + str(error.code))
+            print "loadBioGridMapper url resolution failed"
+            print "HTTP ERROR " + str(error.code)
             return None
         except urllib2.URLError as error:
-            print ("loadBioGridMapper url resolution failed")
-            print (error.reason)
+            print "loadBioGridMapper url resolution failed"
+            print error.reason
             return None
         raw = response.read()
         response.close()
-        self._loadMapper(raw)
+        for line in raw.split("\n"):
+            if line.startswith("#") or not line:continue
+            array = line.split()
+            self.biogridMapper(uniprotId=array[0], biogridId=array[1])
 
-
-    def _loadMapper(self, stream):
-        self.biogridMapper.load(stream)
     def analyse(self):
         if len(self) == 0: return None
         container = { "pmids" : [], "experiments" : [], "experimentTypes" : [],
@@ -362,18 +343,6 @@ class BIOGRIDMAPPER():
         if (uniprotId):
             value = self.toBiogrid(str(uniprotId))
             return value
-
-    def read(self, fileName):
-        s=''
-        with open(fileName, 'r') as f:
-            s = f.read()
-        self.load(s)
-
-    def load(self, stream):
-        for line in stream.split("\n"):
-            if line.startswith("#") or not line:continue
-            array = line.split()
-            self(uniprotId=array[0], biogridId=array[1])
 
     def toUniprot (self, id):
         if id in self.biogridToUniprot:

@@ -17,14 +17,14 @@ class Matrisome:
             if d['UniProt_IDs']:
                 for k in d['UniProt_IDs'].split(':'):
                     if k in accessors['uniprot']:
-                        print (k + ' found multiple time')
+                        print k + ' found multiple time'
                     else :
                         accessors['uniprot'][k] = []
                     accessors['uniprot'][k].append(d)
             if d['Gene Symbol']:
                 for k in d['Gene Symbol'].split(':'):
                     if k in accessors['gene']:
-                        print (k + ' found multiple time')
+                        print k + ' found multiple time'
                     else :
                         accessors['gene'][k] = []
                     accessors['gene'][k].append(d)

@@ -1,82 +1,10 @@
-# coding: utf8
-#import urllib2
+import urllib2
 from bs4 import BeautifulSoup
 import re
 import xml.etree.ElementTree as ET
 import pyproteinsExt.uniprot
 import json
 import os
-import numpy as np
-import multiprocessing
-import pyproteins.container.Core as ca
-PYTHONIOENCODING='utf-8'
-
-class MitabTopology(object):
-    def __init__(self, psqObject):
-        self.tmpAdj = ca.dnTree(append=True)
-        for psqData in psqObject:
-            self.tmpAdj.append(psqData.interactors[0][0][1], 
-                            psqData.interactors[1][0][1], psqData)
-    
-    def keys(self):
-        return  list( self.tmpAdj.keys() )
-
-    def __iter__(self):
-        for d in self.tmpAdj:
-            yield d
-
-    def __len__(self):
-        return len(self.tmpAdj)
-            
-    def __getitem__(self, k1):
-        return self.tmpAdj.getNonDense(k1)
-
-    def __repr__(self):
-        return repr(self.tmpAdj)
-
-def parse_worker(input):
-    print( 'Worker^^ ' + str(len (input['bufferArray'])) )
-    #for f in input:
-    #    print f
-    #return []
-    bufferRecords = []
-
-    looseChk = False
-    if 'looseChk' in input:
-        if input['looseChk'] :
-            looseChk = True
-
-    for line in input['bufferArray']:
-        if len(line) == 0 or line.startswith("#"):
-            continue
-        if 'encoder' in input:
-                #print "==>" + kwargs['encoder']
-            datum = PSQDATA( line.decode(['encoder']) )
-        else:
-            datum = PSQDATA(line)
-            #if _checkPsqData(input['self'], datum) or looseChk:
-        bufferRecords.append(datum)
-
-    return bufferRecords
-
-def _checkPsqData (self, psqDataObj):
-    pmid = psqDataObj['pmid']
-    source = psqDataObj['source'].lower()
-    if not pmid in self.registredPublications:        
-        self.registredPublications[pmid] = source
-        #print("Putting " + source +  ' in ' +  self.registredPublications[pmid])
-        #print(psqDataObj)
-        return True
-
-    if self.registredPublications[pmid] == source:
-        return True
-    else:
-        #print ("Warning publication " + pmid + " provided by " + source + " has already been fetched from " + self.registredPublications[pmid])
-        #print(psqDataObj)
-        return False
-
-
-
 #from pkg_resources import resource_stream, Requirement
 #
 
@@ -113,53 +41,19 @@ class OLS():
         u = termId.replace(":", "_")
         req = self._parse("terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F" + u + "/hierarchicalAncestors")
         self.lineage[termId] = [ k['obo_id'] for k in req["_embedded"]["terms"] if  k['obo_id'] ]
-        print(self.lineage[termId])
+        print self.lineage[termId]
 
     def getTermById(self, termId=None):
         ans = self.restApi + 'terms?obo_id=' + termId
-        print(ans)
+        print ans
         if ans == termId:
-            print("id term failed")
+            print "id term failed"
             return None
-
-
-def _convert(psqDataObj, biogridMapper):
-    for i in range(0,2):
-        if psqDataObj.data[i].data[0].type == 'uniprotkb:':
-            continue
-
-        tmp = str(psqDataObj.data[i].data[0])
-        v = psqDataObj.data[i + 2]['biogrid']
-        if not v:
-            break
-        u = biogridMapper(biogridId=v[0])
-        if not u:
-            break
-
-        #nP = PSQFIELD('uniprotkb:' + u)
-        psqDataObj.data[i] = PSQDATUM('uniprotkb:' + u)
-        psqDataObj.data[i + 2].data.append(PSQFIELD(tmp))
-
 
 class PSICQUIC(object):
     mitabLvls = ["25", "27"]
     olsWebService = OLS()
 
-    def read(self, fileName, **kwargs):
-        with open(fileName, 'r') as f:
-           # print 'toto2'
-            s = f.read()
-        #return
-        #if n > 1:
-
-        #else:
-            self._parseString(s, **kwargs)
-
-
-    def convert(self, biogrid=None): #  bioigrid is a reference to a BIOGRID mapper object
-        if biogrid:
-            for psqData in self:
-                _convert(psqData, biogrid)
     #returns a subset of the current PSICQUIC data, create a new PSICQUIC object
     #For now, psicquic datum are never modified, we therefore simply copy by reference
     def clone(self, **kwargs):
@@ -168,25 +62,24 @@ class PSICQUIC(object):
             cloneSelf.records = records
         #if 'partnerPairs' in kwargs:
 
-    def __add__(self, other):
-        self.records += [ psqDataObj for psqDataObj in other.records if _checkPsqData(self, psqDataObj) ]
 
     def __len__(self):
         return len (self.records)
 
-    def __init__(self, registryUrl="http://www.ebi.ac.uk/Tools/webservices/psicquic/registry/registry?action=STATUS&format=xml", mode='LOOSE', offLine=False):
+    def __init__(self, registryUrl="http://www.ebi.ac.uk/Tools/webservices/psicquic/registry/registry?action=STATUS&format=xml", mode='STRICT', offLine=False):
         self.records = []
-        self.mode = mode # or 'STRICT' to avoid pmid from different source, less efficient than hash
+        self.mode = mode # or 'LOOSE'
         self.registredPublications = {} # { "pubid" : "sourceDatabase" }
-        
+
         if not offLine:
             self.registry = self.getRegistry(registryUrl)
             if not self.registry:
                 self.registry = registry()
 
     def __repr__(self):
-        return  "\n".join(map(str, self.records))
-        
+        string = "\n".join(map(str, self.records))
+        return string
+
     def __getitem__(self, i):
         return self.records[i]
 
@@ -205,27 +98,23 @@ class PSICQUIC(object):
             with open(file, 'w') as f:
                 f.write(jsonString)
         return jsonString
-    def __str__(self):
-        if len(self) > 100: 
-            return  "100 first items...\n" + "\n".join(map(str, self.records[:100]))
-        return "\n".join(map(str, self.records))
-        
+
     def dump(self, file=None):
         if file:
             with open(file, 'w') as f:
                 f.write(self.__repr__())
         #else:
         #    print self.__repr__()
-        return self.__str__()
+        return self.__repr__()
     def load(self, mitabStream):
         if not mitabStream:
-            print("You must provide a mitab input")
+            print "You must provide a mitab input"
             return
         bufferStr = ""
 
         for line in mitabStream:
             bufferStr = bufferStr + line
-        self._parseString(bufferStr)
+        self._parse(bufferStr)
 
 # Receives a 2 tuple of uniprot identifiers (h1,h2)
 # Performs two requests with OR combination of w/ each set, and a AND combination of the two set
@@ -275,9 +164,9 @@ class PSICQUIC(object):
             cloneTwo.query( uniprotId=p2, **kwargs)
 
 
-        print ('**************')
-        print (len (cloneOne))
-        print (len (cloneTwo))
+        print '**************'
+        print len (cloneOne)
+        print len (cloneTwo)
 
        # with open('/Users/guillaumelaunay/toto_1.txt', 'w') as f:
        #     f.write(cloneOne.dump())
@@ -288,7 +177,7 @@ class PSICQUIC(object):
 
         bufRecords = set(cloneOne.records) & set(cloneTwo.records)
         self.records = list(bufRecords)
-        print(len(self))
+        print len(self)
 
     def query(self, **kwargs):
 
@@ -314,7 +203,7 @@ class PSICQUIC(object):
             self.clear()
 
         if mitabLvl not in self.mitabLvls:
-            print("invalid mitab level " + mitabLvl)
+            print "invalid mitab level " + mitabLvl
             return None
 
         parameterSet = ('uniprotId', 'seeds', 'pair', 'species')
@@ -347,7 +236,7 @@ class PSICQUIC(object):
         for provider in providers:
 # psicquic members
             if not provider in self.registry:
-                print("provider is no registred database")
+                print "provider is no registred database"
                 continue
             miql = self.registry[provider] + 'query/' + miqlString
             #print miql
@@ -355,7 +244,7 @@ class PSICQUIC(object):
             if ans == 0:
                 ans, encoder = self._ping(miql + "?format=tab25")
             if ans:
-                self.parseString(ans, encoder=encoder)
+                self._parse(ans, encoder=encoder)
             else:
                 continue
 
@@ -369,13 +258,13 @@ class PSICQUIC(object):
             response = urllib2.urlopen(url)
         except urllib2.HTTPError as error:
             if error.code == 406:
-                print (url)
-                print ("mitab Level may not be supported retrying w/ 2.5")
+                print url
+                print "mitab Level may not be supported retrying w/ 2.5"
                 return 0
-            print (url + "\nHTTP ERROR " + str(error.code))
+            print url + "\nHTTP ERROR " + str(error.code)
             return None
         except urllib2.URLError as error:
-            print (url + "\n" + str(error.reason))
+            print url + "\n" + str(error.reason)
             return None
         raw = response.read()
 
@@ -391,43 +280,20 @@ class PSICQUIC(object):
         try:
             response = urllib2.urlopen(url)
         except urllib2.HTTPError as error:
-            print ("Unable to contact registry at " + url)
-            print ("Loading default")
+            print "Unable to contact registry at " + url
+            print "Loading default"
             return registry()
 
         raw = response.read()
         response.close()
         return registry(raw)
 
-    # mode = LOOSE and mprocess, encoder, have to be passed a kwargs
-    def _parseString(self, raw, **kwargs):
-        bufferArray = [ line for line in raw.split("\n") ]
-    
-        if 'n' in kwargs:
-            if kwargs['n'] > 1 :
-                print('Distributing parsing of ' +  str(len(bufferArray)) + ' mitab lines over ' + str(kwargs['n']) + ' processes')
-                inputs =  [ { 'bufferArray' : x.tolist() }for x in np.array_split(bufferArray, kwargs['n']) ]
-                    #if __name__ == '__main__':
-                for d in inputs:
-                    if 'encoder' in kwargs:
-                        d['encoder'] = kwargs['encoder']
-                    d['looseChk'] = True if self.mode is 'LOOSE' else False
-                       # d['self'] = self
-                pool = multiprocessing.Pool(processes=kwargs['n'])
-    # map the list of lines into a list of result dict
-                res = pool.map(parse_worker, inputs)
-                for r in res:
-                    self.records += r
-                pool.close()
-                pool.join()
-                return
 
-        self._parse(bufferArray)
 
-    def _parse(self, bufferArray, **kwargs):
-        
+    def _parse(self, raw, **kwargs):
+
         bufferRecords = []
-        for line in bufferArray:
+        for line in raw.split("\n"):
             if len(line) == 0 or line.startswith("#"):
                 continue
             if 'encoder' in kwargs:
@@ -435,12 +301,26 @@ class PSICQUIC(object):
                 bufferRecords.append( PSQDATA( line.decode(kwargs['encoder']) ) )
             else:
                 bufferRecords.append(PSQDATA(line))
-        
+
+
         if self.mode is "LOOSE":
             self.records += bufferRecords
         else:
-            self.records = [data for data in bufferRecords if _checkPsqData(self, data)]
-        
+            self.records += [data for data in bufferRecords if self._checkPsqData(data)]
+
+    def _checkPsqData (self, psqDataObj):
+        pmid = psqDataObj['pmid']
+        source = psqDataObj['source']
+        if not pmid in self.registredPublications:
+            self.registredPublications[pmid] = source
+            return True
+
+        if self.registredPublications[pmid] == source:
+            return True
+        else:
+            #print "Warning publication " + pmid + " provided by " + source + " has already been fetched from " + self.registredPublications[pmid]
+            return False
+
     def analyse(self):
         if len(self) == 0: return None
         data = {
@@ -456,22 +336,19 @@ class PSICQUIC(object):
                 knownPmids.append(record['pmid'])
         return knownPmids
 
-    def statInteractionMethods(self, opt=None):
-        if opt :
-            stats = opt
-        else :
-            stats = {
-                "MI:0401" : { "name" : "biochemical", "count" : 0},
-                "MI:0013" : { "name" : "biophysical", "count" : 0},
-                "MI:0254" : {"name":"genetic interference","count" : 0},
-                "MI:0428" : { "name" : "imaging technique", "count" : 0},
-                "MI:1088" : { "name" : "phenotype-based detection assay", "count" : 0},
-                "MI:0255" : { "name" : "post transcriptional interference", "count" : 0},
-                "MI:0090" : {"name":"protein complementation assay","count":0},
-                "MI:0362" : { "name" : "inference", "count" : 0},
-                "MI:0063" : {"name":"interaction prediction","count":0},
-                "MI:0686" : { "name" : "unspecified method", "count" : 0}
-            }
+    def statInteractionMethods(self):
+        stats = {
+            "MI:0401" : { "name" : "biochemical", "count" : 0},
+            "MI:0013" : { "name" : "biophysical", "count" : 0},
+            "MI:0254" : {"name":"genetic interference","count" : 0},
+            "MI:0428" : { "name" : "imaging technique", "count" : 0},
+            "MI:1088" : { "name" : "phenotype-based detection assay", "count" : 0},
+            "MI:0255" : { "name" : "post transcriptional interference", "count" : 0},
+            "MI:0090" : {"name":"protein complementation assay","count":0},
+            "MI:0362" : { "name" : "inference", "count" : 0},
+            "MI:0063" : {"name":"interaction prediction","count":0},
+            "MI:0686" : { "name" : "unspecified method", "count" : 0}
+        }
         stillExperimental = 0
         for psqDataObj in self:
             detectMeth = psqDataObj["interactionDetectionMethod"]
@@ -488,7 +365,7 @@ class PSICQUIC(object):
                 if detectMeth == "MI:0045":
                     stillExperimental = stillExperimental + 1
                 else:
-                    print("Warning " + detectMeth + " was not cast")
+                    print "Warning " + detectMeth + " was not cast"
 
         stats["experimental"] = stillExperimental
         #print stats
@@ -525,14 +402,12 @@ class PSICQUIC(object):
                     l += up
             return list(set(l))
 
-
 # Returns another instance of PSQ with filter data elements
     def filter(self, **kwargs):
-        target = PSICQUIC(offLine=True)
-       
+        target = PSICQUIC()
+        buf = kwargs['uniprot']
         # For now we dont look into alias uniprot identifiers
         if 'uniprot' in kwargs:
-            buf = kwargs['uniprot']
             if isinstance(kwargs['uniprot'], list):
                 buf = set(kwargs['uniprot'])
             elif isinstance(kwargs['uniprot'], basestring):
@@ -549,39 +424,23 @@ class PSICQUIC(object):
                     #print str(up) + ' <===> ' + str(buf)
                     target.records.append(psqData)
 
-        if 'predicate' in kwargs:
-            f = kwargs['predicate']
-            for psqData in self:
-                if f(psqData):
-                    target.records.append(psqData)
-        
         return target
 
 # This is the main interface we try to define smart __getitem__() access keys
 class PSQDATA():
     def __eq__(self, other):
-        return hash(self) == hash(other)
-
+        if hash(self) == hash(other):
+            return True
+        return False
     def __hash__(self):
-        
-        idA = self.data[0].data[0].value
-        idB = self.data[1].data[0].value
-        
-        max = idA if hash(idA) > hash(idB) else idB
-        min = idA if hash(idA) < hash(idB) else idB
-        
-
-        return hash( min + max + self.data[1].data[0].value + self["interactionDetectionMethod"] + self["pmid"])
+        return hash(self.data[0].data[0].value + self.data[1].data[0].value + self["interactionDetectionMethod"] + self["pmid"])
 
     def __init__(self, raw):
         self.raw = raw
-        self.data = [PSQDATUM(column) for column in re.split(r'\t+', raw)]#raw.split("\t") ] #if column
+        self.data = [PSQDATUM(column) for column in raw.split("\t")]
 
         if len(self.data) != 15 and len(self.data) != 42:
-            for i,e in enumerate(self.data):
-                print ('[' + str(i) + '] ' + str(e))
-            raise ValueError ("Uncorrect number of tabulated fields on input [" +
-                str(len(self.data)) + "] at:\n" + str(raw) )
+            raise ValueError ("Uncorrect numbner of tabulated fields on input " + str(len(data)) )
 
     def __repr__(self):
         string = "\t".join(map(str,self.data))
@@ -608,37 +467,25 @@ class PSQDATA():
                 return (a, b)
             return None
 
-
     @property
     def json(self):
-        return json.dumps({ k : str(d)for k,d in zip(PSQ_FIELDS, self.data) })
+
+        #for k,d in zip(PSQ_FIELDS, self.data):
+
+            #print k
+            #print d
+            #print d.data
+            #print map(str,d.data)
+
+            #print [ x.replace('"', r'\\') for x in map(str,d.data)]
+
+        return '{' + ','.join([ '"' + k  + '" : [' + ','.join([ '"' + x.replace('"', r'\"') + '"' for x in map(str,d.data) ]) + ']' for k,d in zip(PSQ_FIELDS, self.data) ]) + '}'
 
     @property
     def interactors(self):
         datum = (self.data[0].content + self.data[2].content, self.data[1].content + self.data[3].content )
         #print datum
         return  datum
-    
-    def swapInteractor(self, to, iSlot=None): # iSlot to force, maybe autoassociation ?
-        consideredSlots = [0, 1]
-        if iSlot:
-            try :
-                consideredSlots= [ ['A', 'B'].index(iSlot) ]
-            except ValueError:
-                print("if you specify a slot to swap interactors it must be \"A\" or \"B\"")
-                return
-
-        for i in consideredSlots:
-            psqDatumObj = self.data[i]
-            psqDatumObjAlt = self.data[i + 2]
-            #print (str(i) + '::' + str(psqDatumObjAlt))
-            for iField, cPsqField in enumerate(psqDatumObjAlt):
-             #   print(cPsqField.value)
-                if cPsqField.value == to:                    
-                    _psqFieldAnon = cPsqField
-                    psqDatumObjAlt.data[iField] = psqDatumObj.data[0] # Access the 1st psqField
-                    psqDatumObj.data[0] = _psqFieldAnon
-                    break
 
     def hasInteractors(self, mode='STRICT'):
     #    for psqDatum in [ self.data[0].content + self.data[]
@@ -661,18 +508,6 @@ class PSQDATUM():
         string = '|'.join(map(str,self.data))
         return string
 
-    def __iter__(self):
-        for psqFieldObj in self.data:
-            yield psqFieldObj
-
-    def __getitem__(self, key):
-        hits = []
-        for psqFieldObj in self.data:
-            if psqFieldObj.type == key + ':':
-                hits.append(psqFieldObj.value)
-        return hits
-
-
     @property
     def content(self):
         return [ (e.type, e.value) for e in self.data ]
@@ -683,7 +518,6 @@ class PSQFIELD():
     fieldParser = re.compile('^([^:^"]+:){0,1}"{0,1}([^"\(]+)"{0,1}\({0,1}([^\)]+){0,1}\){0,1}$')
     def __init__(self, raw):
         m = re.match(self.fieldParser, raw)
-        self._raw = raw
         if not m:
             #print "warning following field causes problem to parse\n" + raw
             self.value = raw
@@ -705,7 +539,7 @@ class PSQFIELD():
     #    return string
 
     def __str__(self):
-        return self._raw
+
 
         try :
             string = self.value.decode('ascii')
@@ -716,9 +550,6 @@ class PSQFIELD():
             #print "UTF ENCODING"
             string = self.value.encode('utf8')
         #string = self.value
-
-        if self.type is 'comment':
-            return self.raw
 
         if self.type:
             string = self.type + string
@@ -757,7 +588,7 @@ class registry():
             try:
                 root = ET.fromstring(raw)
             except:
-                print("Registry Remote XML parsing error, using local file as registry")
+                print "Registry Remote XML parsing error, using local file as registry"
 #                resource_stream(Requirement.parse("pyproteinsExt=="), "restez/httpconn.py")
 
                 path =  os.path.abspath(__file__)
