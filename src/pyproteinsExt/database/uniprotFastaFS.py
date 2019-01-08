@@ -1,12 +1,12 @@
 """
     Build a database of fasta entries using file system directory architecture
     Usage:
-        uniprotFastaFS_2.py <location> [--cluster <bigFile> --radius <radius>]
-        uniprotFastaFS_2.py <location> [--nodes <volNumExp> --threads <nWorker> --size <size>]
-        uniprotFastaFS_2.py <location> [--input <file> --size <size> --auto]
-        uniprotFastaFS_2.py <location> [--get <proteinID> --out <fileOut>]
-        uniprotFastaFS_2.py <location> (-i | --info)
-        uniprotFastaFS_2.py --view <file>
+        uniprotFastaFS.py <location> [--cluster <bigFile> --radius <radius>]
+        uniprotFastaFS.py <location> [--nodes <volNumExp> --threads <nWorker> --size <size>]
+        uniprotFastaFS.py <location> [--input <file> --size <size> --auto]
+        uniprotFastaFS.py <location> [--get <proteinID> --out <fileOut>]
+        uniprotFastaFS.py <location> (-i | --info)
+        uniprotFastaFS.py --view <file>
 
     Options:
         -h --help                             Show this screen
@@ -19,7 +19,7 @@
         -o <fileOut>, --out <fileOut>         output file [default: stdout]
         -c <file>, --cluster <file>           archive file to dispatch to nodes
         -r <radius>, --radius <radius>        maximum number or entries per nodes
-        -n <volNumExp>, --nodes <volNumExp>   Building the volumes of marching regExp  umber nodes
+        -n <volNumExp>, --nodes <volNumExp>   Building the volumes of marching regExp  number nodes
         -t <nWorker>, --threads <nWorker>     Set the number of workers for parrallel building of node volumes
 
 """
@@ -409,8 +409,7 @@ def _getElemDirNode(rootDir, _id):
     
     return (None, 0, None)
 
-# Will split an input file into subfile of maxSize content
-# Will create a dedicated folder foreach
+# Will split an input file into subfile of maxSize content, and zip them
 def setNodes(rootFolder, inputFile, maxSize):
     nodeCounter = 0
     fCurrent = None
