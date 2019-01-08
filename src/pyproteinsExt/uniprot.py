@@ -9,10 +9,47 @@ import json
 
 from os.path import expanduser
 
+PfamEntrySet = None
+uniprotEntrySet = None
 
-PfamEntrySet = pfam.EntrySet()
+
+## Returns a list of all keyword in collection, along with the list of uniprotObj featuring them
+def keyWordChart(uniprotObjIter, kwType='GO'):
+    def kwMapper(obj, _type) : 
+        if _type == 'GO':
+            return obj.GO
+        raise TypeError("implement other KW plz")
+    
+    kwChart = {}
+    for uniprotObj in uniprotObjIter:
+        for kwObj in  kwMapper(uniprotObj, kwType):
+            if kwObj not in kwChart:
+                kwChart[kwObj] = []
+            kwChart[kwObj].append(uniprotObj)
+    
+    return sorted([ (k,v) for k,v in kwChart.items() ], key=lambda x : len(x[1]), reverse=True)
+
+# Give link to uniprot Collection to allow proxy settings
+# and cache setting for it and pfam
+def getUniprotCollection ():
+    global uniprotEntrySet
+    if not uniprotEntrySet:
+        uniprotEntrySet = EntrySet()
+
+    return uniprotEntrySet
+
+#def setCache(location):
+#    print location
+#    uniprotEntrySet.setCache(location=location)
+
+#def proxySetting(**kwargs):
+#    proxySetting(**kwargs)
 
 def getPfamCollection ():
+    global PfamEntrySet
+    if not PfamEntrySet:
+        PfamEntrySet = pfam.EntrySet()
+
     return PfamEntrySet
 
 def proxySetting(**param):
@@ -71,7 +108,7 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         print ("serializing uniprot collection")
         super().serialize(kwargs)
         print ("serializing pfam collection")
-        PfamEntrySet.serialize(kwargs)
+        getPfamCollection().serialize(kwargs)
 
 class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fileName=None):
@@ -175,7 +212,7 @@ class Entry(pyproteins.container.Core.Container):
         if not self.domains:
         #    print "No domain data found for " + self.id + ", attempting pfam"
             try :
-                self.domains = PfamEntrySet.map(uniprotID=self.id)
+                self.domains = getPfamCollection().map(uniprotID=self.id)
             except ValueError as msg:
                 print ("Could not bind uniprot to its pfam ressources reason\n" + str(msg))
 
@@ -403,7 +440,16 @@ class Sse():
     def __repr__(self):
         return "SSE:" + self.type + " " + str(self.begin) + "-" + str(self.end)
 
-class GoKW(object):
+
+class annotTerm:
+    def __init__(self):
+        pass
+    def __hash__(self):
+        return hash(str(self.id))
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+class GoKW(annotTerm):
     def __init__(self, e):
         self.id = e['id']
         self.term = e.find('property', type='term')['value']
@@ -411,14 +457,14 @@ class GoKW(object):
     def __repr__(self):
         return self.id + ":" + self.term + "{" + self.evidence + "}"
 
-class MimKW(object):
+class MimKW(annotTerm):
     def __init__(self, e):
         self.id = e['id']
         self.value = e.find('property', type='type')['value']
     def __repr__(self):
         return self.id + ":" + self.value
 
-class OrphaKW(object):
+class OrphaKW(annotTerm):
     def __init__(self, e):
         self.id = e['id']
         self.type = e.find("property")['type']
@@ -427,7 +473,7 @@ class OrphaKW(object):
     def __repr__(self):
         return self.id + ": (" + self.type + ")" + self.value
 
-class DI(object):
+class DI(annotTerm):
     def __init__(self, e):
         self.id = e['id']
         self.name = e.find('name').string

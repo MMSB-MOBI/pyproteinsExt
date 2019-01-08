@@ -22,6 +22,12 @@ TO DO
 
 TO DO
 
+```python
+import json
+uObj = uColl.get('Q8DR57')
+json.dumps(uObj, cls=EntryEncoder)
+```
+
 #### Pfam container
 
 ### Protein-Protein interaction containers

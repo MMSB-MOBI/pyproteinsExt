@@ -13,22 +13,6 @@ import copy
 
 # Basic input is a pdFrame, CSV maybe
 
-
-# Give link to uniprot Collection to allow proxy settings
-# and cache setting for it and pfam
-def getUniprotCollection ():
-    return uniprotEntrySet
-
-
-uniprotEntrySet = pyproteinsExt.uniprot.EntrySet()
-
-#def setCache(location):
-#    print location
-#    uniprotEntrySet.setCache(location=location)
-
-def proxySetting(**kwargs):
-    pyproteinsExt.uniprot.proxySetting(**kwargs)
-
 # Takes an iterable, along with a coherce to uniprot Identifier
 # returns and list of tuple with each iterable element and its uniprot Object
 #
