@@ -1,4 +1,5 @@
 import re,sys, io
+import gzip
 
 #
 # Factory to parse hmmscan // hmmsearch outputs
@@ -15,7 +16,7 @@ reType=re.compile('^\# hmm([\S]+) :: search ([\S]+) against a ([\S]+) database[\
 # hmmsearch :: search profile(s) against a sequence database
 reQuery   = re.compile('Query:[\s]+([\S].*)[\s]+\[[LM]=[\d]+\]')
 reStart   = re.compile('^Scores for complete sequences \(score includes all domains\):')
-reSum     = re.compile('^[\s]+([0-9][\d\.e-]+)[\s]+([\d\.e-]+)[\s]+([\d\.e-]+)[\s]+([\d\.e-]+)[\s]+([\d\.e-]+)[\s]+([\d\.e-]+)[\s]+([\d\.e-]+)[\s]+([\d\.e-]+)[\s]+([\S]+)[\s]+([\S].*)[\s]*$')
+reSum     = re.compile('(([\d\.e-]+[\s]+){7})([0-9]+)[\s]+([\S]+)[\s]+([\S].*)$')
 reInclude = re.compile('------ inclusion threshold ------')
 reDetail  = re.compile('Domain annotation for each ([\S]+) \(and alignments\):')
 reStop    = re.compile('Internal pipeline statistics summary')
@@ -33,11 +34,18 @@ def parse(inputFile=None):
     upType = None
     bigBuffer = ''
     if inputFile:
+        fnOpen = open
+        t = 'r'
+        if inputFile.endswith('gz'):  
+            fnOpen = gzip.open
+            t = 'rt'
+  
         try:
-            f = open(inputFile, 'r')
+            f = fnOpen(inputFile, t)
         except IOError:
             print ("Could not read file:", inputFile)
             return Container()
+        
         with f:
             for l in f:
                 bigBuffer += l
@@ -112,11 +120,13 @@ def _parseBuffer(input):
     readBool = False
     detailBool = False
     detailBuffer = []
+    summaryBool = False
 
     queryID = None
     emptyLinesInRow = 0
 
     for l in input:
+       # print(l)
         if not queryID:
             m = reQuery.search(l)
             if m:
@@ -125,6 +135,24 @@ def _parseBuffer(input):
         if reStart.search(l):
             readBool = True
             continue
+
+        if re.search('\-\-\- full sequence \-\-\-   \-\-\- best 1 domain \-\-\-    \-#dom\-', l):
+            #print ("UP")
+            summaryBool = True
+            inclusionBool = True
+            continue
+
+        if summaryBool and reEmpty.match(l):
+            #print ("LOW")
+            summaryBool = False
+            continue
+
+        #    print("?")
+        #    if l.starstwith('Domain annotation for each model'):         
+        #        print("NN")  
+        #        summaryBool = False
+        #        continue
+
         if reDetail.search(l):
             readBool = False
             detailBool  = True
@@ -142,28 +170,36 @@ def _parseBuffer(input):
             emptyLinesInRow = 0
 
 
-        if readBool:
+        #if readBool:
             #buf = l.split("    ")
             #if len(buf) == 10:
             #print(str(len(buf))+ ':: ' + str(buf))
+
+        if summaryBool:
             if reInclude.search(l):
                 inclusionBool = False
-            m = reSum.match(l)
+            #print("Summary parsing attempt")
+            m = reSum.search(l)        
             if m:
+                scores = m.group(1).split()
                 summary.append({
-                    'E-value'    : m.group(1),
-                    'score'      : m.group(2),
-                    'bias'       : m.group(3),
-                    'E-value'    : m.group(4),
-                    'score'      : m.group(5),
-                    'bias'       : m.group(6),
-                    'exp'        : m.group(7),
-                    'N'          : m.group(8),
-                    'Sequence'   : m.group(9),
-                    'Description': m.group(10),
+                    'fullSequence' : {
+                        'E-value'    : scores[0],
+                        'score'      : scores[1],
+                        'bias'       : scores[2]
+                    },
+                    'bestOneDomain' : {
+                        'E-value'    : scores[3],
+                        'score'      : scores[4],
+                        'bias'       : scores[5]
+                    },
+                    'exp'        : scores[6],
+                    'N'          : m.group(3),
+                    'Model'   : m.group(4),
+                    'Description': m.group(5),
                     'included'   : inclusionBool
                 })
-                #print (summary[-1])
+                    #print (summary[-1])
         if detailBool:
             if l.startswith(">>"):
                 detailBuffer.append(l)
@@ -221,6 +257,19 @@ class Match (object):
 
     def __repr__(self):
         return str( self.__dict__ )
+
+    def _repr_html_(self):
+        htmlContent = ''
+        for d in self.data:
+            htmlContent += '<table style="border:none">'
+            for name, x, y, field in [ (self.hmmID, d.hmmFrom, d.hmmTo, d.hmmStringLetters), ("", "", "", d.matchString), (self.aliShortID, d.aliFrom, d.aliTo, d.aliStringLetters) ]:
+                htmlContent += '<tr style="border:none"><td style="border:none">' + name + '</td>' \
+                                + '<td style="border:none; color:red; font-size:0.8em">'+ x + '</td><td style="border:none; color:red; font-size:0.8em">' + y + '</td>' \
+                                + '<td align="center" style="min-width:20px; text-align:center;border:1px solid rgba(0, 0, 0, .05);">' \
+                                + '</td><td align="center" style="min-width:20px; text-align:center;border: 1px solid rgba(0, 0, 0, .05);">'.join(field) +  '</td></tr>'
+            htmlContent += '</table>'
+            
+        return htmlContent
 
 class Alignment(object):
 

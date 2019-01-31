@@ -12,6 +12,15 @@ from os.path import expanduser
 PfamEntrySet = None
 uniprotEntrySet = None
 
+from json import JSONEncoder
+
+import pyproteins.utils.make_json_serializable
+#def _default(self, obj):
+#    return getattr(obj.__class__, "toJSON", _default.default)(obj)
+#
+#_default.default = JSONEncoder.default
+#JSONEncoder.default = _default
+
 
 ## Returns a list of all keyword in collection, along with the list of uniprotObj featuring them
 def keyWordChart(uniprotObjIter, kwType='GO'):
@@ -154,17 +163,29 @@ class Entry(pyproteins.container.Core.Container):
         return self.id == other.id
 
     def toJSON(self):
-        asDict = {}
-        for k in self.__dict__.keys():
-            if k == 'xmlHandler':
-                continue
-            if k != 'GO':
-                continue
-            asDict[str(k)] = getattr(self, k)
-            print(asDict)
-        return json.dumps(asDict)#,#lambda o: o.__dict__, 
-            #sort_keys=True)#, indent=4)
+        #print ('toJSON')
+        #asDict = {}
+        #for k in self.__dict__.keys():
+        #    if k == 'xmlHandler':
+        ##        continue
+        #    if k != 'GO':
+        #        continue
+        #    asDict[str(k)] = getattr(self, k)
+        #    print(asDict)
 
+        container = {}
+        for k, v in self.__dict__.items():
+            if k == 'name':
+                container[k] = v
+            if k == 'GO':
+                container[k] = [ go.__dict__ for go in v ]
+            if k == 'id':
+                container[k] = v
+            if k == 'geneName':
+                container[k] = v
+            if k == 'fullName':
+                container[k] = v
+        return container
 
     def parseAC(self):
         self.AC = [e.text for e in self.xmlHandler.find_all('accession')]
@@ -348,6 +369,7 @@ class EntryEncoder(json.JSONEncoder):
             return container
         # Error
         return json.JSONEncoder.default(self, entryObj)
+
 
 
 class Position ():

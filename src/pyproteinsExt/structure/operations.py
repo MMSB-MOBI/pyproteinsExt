@@ -1,5 +1,5 @@
 #import pyproteinsExt.structure.coordinates
-import pyproteins.services.multiThread
+from multiprocessing import Pool
 import pyproteins.sequence.msa
 import pyproteins.alignment.nw_custom
 import pyproteins.sequence.peptide
@@ -538,31 +538,30 @@ def blastThem(pdbA, pdbB, mode):
 
     def _blastpgp(name):
         j = 1
-        print ' basltpg stuff ' + name + ' ' + str(j)
+        print( 'basltpg stuff', name, str(j) )
         try:
             subprocess.call(['blastpgp', '-j', str(j), '-i', name + '.fasta', '-d', 'nr70i', '-m', '7', '-o', name + '.blast'])
         except OSError as e:
             if e.errno == os.errno.ENOENT:
-                print 'blastpgp not found'
+                print('blastpgp not found')
         # handle file not found error.
             else:
-                print 'Something wrong w/ blastpgp'
+                print('Something wrong w/ blastpgp')
         return name + '.blast'
 
 
     if mode == "debug":
-        print "no blast ran, debug mode"
+        print("no blast ran, debug mode")
         return 'blastDebugMode'
 
-    print "running psiblast"
-
-    x = pyproteins.services.multiThread.map(['proteinA', 'proteinB'], _blastpgp)
-    print x
-
+    print("running psiblast")
+    with Pool(2) as p:
+        x = p.map(_blastpgp, ['proteinA', 'proteinB'])
+    
 def clustThem(mode):
 
     if mode == "debug":
-        print "no clustal ran, debug mode"
+        print("no clustal ran, debug mode")
         pMsa = pyproteins.sequence.msa.Msa(fileName='proteins.aln')
         return pMsa
 
@@ -605,10 +604,7 @@ def aliFit(structA, structB, aliArrayOne, aliArrayTwo):
             continue
         equiResNum.append( { 'iRes' : { 'num' : i , 'name' : x }, 'jRes' : { 'num' : j , 'name' : y } } )
 
-    print "Superimposing on " + str(len(equiResNum)) + ' CA coordinates'
-
-    #print equiResNum
-
+    print("Superimposing on", str(len(equiResNum)), 'CA coordinates')
 
     P = [ numpy.array( structA.trace[ d['iRes']['num']].coordinates) for d in equiResNum ]
     Q = [ numpy.array( structB.trace[ d['jRes']['num']].coordinates) for d in equiResNum ]
@@ -627,9 +623,9 @@ def aliFit(structA, structB, aliArrayOne, aliArrayTwo):
     k_rmsd = kabsch_rmsd(P, Q)
     q_rmsd = quaternion_rmsd(P, Q)
 
-    print "Normal RMSD:", normal_rmsd
-    print "Kabsch RMSD:", k_rmsd
-    print "Quater RMSD:", q_rmsd
+    print ("Normal RMSD:", normal_rmsd)
+    print ("Kabsch RMSD:", k_rmsd)
+    print ("Quater RMSD:", q_rmsd)
     return (U, normal_rmsd, k_rmsd, q_rmsd)
 
 def fit(structObj1, structObj2, **kwargs):
@@ -651,8 +647,7 @@ def fit(structObj1, structObj2, **kwargs):
         aliSeq1 = msaObj[0]['sequence']
         aliSeq2 = msaObj[1]['sequence']
 
-    print aliSeq1
-    print aliSeq2
+    print (aliSeq1, "\n", aliSeq2)
 
     _tuple = aliFit(structObj1, structObj2, aliSeq1, aliSeq2)
     return _tuple
