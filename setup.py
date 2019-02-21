@@ -15,7 +15,7 @@ from setuptools import setup
 
 setup(
   name = 'pyproteinsExt',
-  version = '1.0',
+  version = '1.3',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
   author = 'Guillaume Launay, Juliette Martin et al',
@@ -26,7 +26,7 @@ setup(
   include_package_data=True,
   zip_safe=False,
   py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-  download_url = 'https://github.com/glaunay/pyproteinsExt/tarball/1.0', # I'll explain this in a second
+  download_url = 'https://github.com/glaunay/pyproteinsExt/tarball/1.2', # I'll explain this in a second
   keywords = ['protein', 'sequence'], # arbitrary keywords
   classifiers = [],
   install_requires=[
