@@ -1,0 +1,4 @@
+pyproteins
+networkx
+bs4
+biopython

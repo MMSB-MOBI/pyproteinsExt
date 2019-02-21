@@ -12,6 +12,7 @@ aaCode = {
 	'GLU' : 'E',
 	'GLN' : 'Q',
 	'GLY' : 'G',
+	'HIS' : 'H',
 	'CYS' : 'C',
 	'LYS' : 'K',
 	'MET' : 'M',
@@ -90,6 +91,8 @@ class Parser(object):
 				elif l.startswith("ENDMDL"):
 					newModel = True
 
+				if l.startswith("SEQRES "):
+					structureObj.loadSEQRES(l)
 
 		if 'file' in kwargs:
 			with open(kwargs['file'], 'r') as f:
@@ -132,9 +135,22 @@ class Structure(object):
 		self._chainList = None
 		self._residues = None
 		self._resID = None
+		self.SEQRES = {}
 
 	def __len__(self):
 		return len(self.model[self.currModel - 1])
+
+	def loadSEQRES(self, line):
+
+		aaSeq = line.split()[2:]
+		segID = aaSeq.pop(0)
+		aaSeq.pop(0)
+		if segID not in self.SEQRES:
+			self.SEQRES[segID] = ''
+		
+		self.SEQRES[segID] += ''.join([ translate(aa) for aa in aaSeq ])
+		
+
 
 	def setCoordinateFromDictorize(self, dictorizedSelf):
 		atomList = self.model[self.currModel - 1]
@@ -428,7 +444,7 @@ class Structure(object):
 				if p_atom.chainID in chainList:
 					currentAtomList.append(copy.deepcopy(p_atom))
 
-
+		cloneObj.name = self.name + ':' + ','.join(chainList)
 		if len(cloneObj.model[0]) == 0:
 			print("Empty selection for chain(s) \"", str(chain), "\"")
 			return None

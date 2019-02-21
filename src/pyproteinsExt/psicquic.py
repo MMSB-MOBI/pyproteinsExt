@@ -587,6 +587,8 @@ class PSQDATA():
         string = "\t".join(map(str,self.data))
         return string
     def __getitem__(self, key):
+        if key is "taxid":
+            return (self.data[9].content[0][1], self.data[10].content[0][1])
         if key is "pmid":
             for field in self.data[8].data:
                 if field.type == "pubmed:":

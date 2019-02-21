@@ -1,0 +1,8 @@
+README.md
+setup.py
+src/pyproteinsExt.egg-info/PKG-INFO
+src/pyproteinsExt.egg-info/SOURCES.txt
+src/pyproteinsExt.egg-info/dependency_links.txt
+src/pyproteinsExt.egg-info/not-zip-safe
+src/pyproteinsExt.egg-info/requires.txt
+src/pyproteinsExt.egg-info/top_level.txt

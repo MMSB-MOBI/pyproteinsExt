@@ -192,7 +192,7 @@ class Entry(pyproteins.container.Core.Container):
 
     def parseLineage(self):
         self.lineage = [ e.text for e in self.xmlHandler.find('lineage').find_all('taxon')]
-
+        self.taxid = self.xmlHandler.find('organism').find_all('dbReference', type='NCBI Taxonomy')[0]['id']
     def parseMIM(self):
         self.MIM = []
         for e in self.xmlHandler.find_all("dbReference", type="MIM"):

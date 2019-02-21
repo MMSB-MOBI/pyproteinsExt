@@ -14,7 +14,45 @@ TO DO
 
 ## Specific container modules
 
+### PDB container
+
+
 ### Protein data container
+
+#### Load a PDB file
+
+```python
+import pyproteinsExt.structure.coordinates as PDB
+parser = PDB.Parser()
+pdbObj = parser.load(file="./1syq.pdb")
+```
+
+##### Display SEQRES
+```python
+pdbObj.SEQRES["A"]
+```
+
+#### Aligning SEQRES and vald ATOM RECORD
+
+##### Create wrapper peptide object
+
+```python
+import pyproteins
+p1 = {'id' : "SEQRES",
+    'desc' : 'pdb file fasta translation',
+    'seq' : pdbObj.SEQRES["A"]
+}
+pepSeqRes = pyproteins.sequence.peptide.Entry(p1)
+pepCoor = pyproteins.sequence.peptide.Entry(pdbObj.chain("A").peptideSeed())
+```
+
+##### Align "peptide" sequences
+
+```python
+nw = pyproteins.alignment.nw_custom.nw(gapOpen=-10, gapExtend=-0.5)
+aliResObj = nw.align(pepSeqRes, pepCoor)
+print(aliResObjnw)
+```
 
 TO DO
 

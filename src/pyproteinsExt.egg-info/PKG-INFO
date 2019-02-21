@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: pyproteinsExt
+Version: 1.0
+Summary: Extending pyproteins for bioinformatics tools&services
+Home-page: https://github.com/glaunay/pyproteinsExt
+Author: Guillaume Launay, Juliette Martin et al
+Author-email: pitooon@gmail.com, juliette.martin@ibcp.fr
+License: BSD
+Download-URL: https://github.com/glaunay/pyproteinsExt/tarball/1.0
+Description-Content-Type: UNKNOWN
+Description: UNKNOWN
+Keywords: protein,sequence
+Platform: UNKNOWN
