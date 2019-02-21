@@ -37,21 +37,22 @@ pdbObj.SEQRES["A"]
 ##### Create wrapper peptide object
 
 ```python
-import pyproteins
+import pyproteins.sequence.peptide as pep
 p1 = {'id' : "SEQRES",
     'desc' : 'pdb file fasta translation',
     'seq' : pdbObj.SEQRES["A"]
 }
-pepSeqRes = pyproteins.sequence.peptide.Entry(p1)
-pepCoor = pyproteins.sequence.peptide.Entry(pdbObj.chain("A").peptideSeed())
+pepSeqRes = pep.Entry(p1)
+pepCoor = pep.Entry(pdbObj.chain("A").peptideSeed())
 ```
 
 ##### Align "peptide" sequences
 
 ```python
-nw = pyproteins.alignment.nw_custom.nw(gapOpen=-10, gapExtend=-0.5)
+import pyproteins.alignment.nw_custom as N
+nw = N.nw(gapOpen=-10, gapExtend=-0.5)
 aliResObj = nw.align(pepSeqRes, pepCoor)
-print(aliResObjnw)
+print(aliResObj)
 ```
 
 TO DO
