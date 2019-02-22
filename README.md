@@ -14,6 +14,100 @@ TO DO
 
 ## Specific container modules
 
+### Multiple Sequence Alignment
+
+#### Reading a file
+
+```python
+import pyproteins.sequence.msa as msaLib
+oMsa = msaLib.Msa(fileName="/Users/guillaumelaunay/work/projects/MSA/clustalw.aln")
+```
+
+#### Accessing sequences
+
+```python
+print(oMsa[0])
+```
+
+will display
+
+```python
+{'header': 'sp|Q5SJH5|RIMM_THET8',
+'sequence':'------MRLVEIGRFGAPYALKGGLRF--RGEP---VVLHLER----'}
+```
+
+##### Accessing matching sequences
+
+Retrieve a sequence in the msa, by specifying a predicate function or a regular expression.
+The predicate function will be applied to each record in turn, it will be passed a dictionary with the **index** and **record** keys.
+Records matching the lookup will be returned in a list with sequence gap striped.
+
+###### indexed-based search
+
+```python
+def f(d):
+    return d["index"] < 10
+recordList = oMsa.recordLookup(predicate=f)
+print(len(recordList))
+print(recordList[0])
+```
+
+will display
+
+```python
+10
+{'header': 'sp|Q5SJH5|RIMM_THET8', 'sequence': 'MRLVEIGRFGAPYALKGGLRFRGEPVVLHLERVYVEGHGWRAIEDLYRVGEELVVHLAGVTDRTLAEALVGLRVYAEVADLPPLEEGRYYYFALIGLPVYVEGRQVGEVVDILDAGAQDVLIIRGVGERLRDRAERLVPLQAPYVRVEEGSIHVDPIPGLFD'}
+```
+
+###### header content based search
+
+```python
+def g(d):
+    return re.search("THET", d["record"]['header'])
+recordList = oMsa.recordLookup(predicate=g)
+print(len(recordList))
+print(recordList[0])
+```
+
+will display
+
+```python
+3
+{'header': 'sp|Q5SJH5|RIMM_THET8', 'sequence': 'MRLVEIGRFGAPYALKGGLRFRGEPVVLHLERVYVEGHGWRAIEDLYRVGEELVVHLAGVTDRTLAEALVGLRVYAEVADLPPLEEGRYYYFALIGLPVYVEGRQVGEVVDILDAGAQDVLIIRGVGERLRDRAERLVPLQAPYVRVEEGSIHVDPIPGLFD'}
+```
+
+#### Transformations
+
+The following methods all return a new **Alignment** object.
+
+##### Column deletions
+
+###### Purging gap
+
+Specify a treshold of gap frequencies to filter out columns, default value is 0.5
+
+```python
+oMsa.gapPurge(gapRatio=0.5)
+```
+
+###### sequence based masking
+
+Use any sequence of the alignment to delete all columns where this sequence features a gap. Default *master* sequence is number 0.
+
+```python
+oMsa.maskMaster(self, masterIndex=0)
+```
+
+###### free slicing
+
+TO DO
+
+
+#### Meta-data and statistics
+
+* oMsa.shape: [sequenceNumber, columnNumber]
+
+
 ### PDB container
 
 
