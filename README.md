@@ -107,7 +107,9 @@ Predicate will be passed 3 arguments :
 * the **master sequence** object
 * the **current sequence** object
 
-Returned object is a MSA of at least one sequence (the master)
+Returned object is a MSA of at least one sequence (the master).
+
+An optional named *masterIndex* can be pass to use an alternative sequence as reference.
 
 
 ```python
