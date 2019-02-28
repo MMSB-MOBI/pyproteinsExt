@@ -98,6 +98,51 @@ Use any sequence of the alignment to delete all columns where this sequence feat
 oMsa.maskMaster(self, masterIndex=0)
 ```
 
+###### sequence based filtering
+
+Sequence within a MSA can be filtered according to their relationships with a master sequence. The predicate function will be applied to all sequence in turn.
+Predicate will be passed 3 arguments :
+
+* a **3-tuple statistic** wrapping (_sequence identity_, _sequence similarity_, _sequence coverage_) of the master with respect to current sequence.
+* the **master sequence** object
+* the **current sequence** object
+
+Returned object is a MSA of at least one sequence (the master)
+
+
+```python
+# Defining predicate, here minimal coverave of 85%
+def f(stat, iSeq, jSeq):
+    return stat[2] > 0.85
+bMsa = oMsa.masterFilter(predicate=f)
+print(bMsa.fastaDump())
+```
+
+will print,
+
+```python
+>sp|Q5SJH5|RIMM_THET8
+---------MRLVEIGRFGAPYALKGGLRFRGEPVVLHLERVYVEGHGWRAIEDLYRVGE
+ELVVHLAGVTDRTLAEALVGLRVYAEVADLPPLEEGRYYYFALIGLPVYVEGRQVGEVVD
+ILDAGAQDVLIIRGVGERLRDRAERLVPLQAPYVRVEEGSIHVDPIPGLFD
+>tr|H9ZRG5|H9ZRG5_THETH
+---------MRLVEIGRFGAPYALKGGLRFRGEPVVLHLERVYVEGHGWRAIEDLYRVGE
+ELVVHLAGVTDRTLAEALVGLRVYAEVADLPPLEEGRYYYFALIGLPVYVEGRQVGEVVD
+ILDAGAQDVLIIRGVGERLRDRAERLVPLQAPYVRVEEGGIHVDPIPGLFD
+>tr|E8PJQ1|E8PJQ1_THESS
+MGLWHNGLGMRLVEIGRFGAPYALRGGLKFRGEPVVAHLERVYVEGHGWRAVEDLYQVGD
+DLVVHLAGVSSRELAEPLVGLRVYAEVEELPPLEEGRYYYFALIGLPVYVGGLKMGEVVD
+ILDAGAQDVLVIRGVGERLRDQTERLVPLQAPYVRVEEEGIHVEPIPGLFD
+>tr|B7A7I3|B7A7I3_THEAQ
+-------MAGRLVEIGRFGAPYALAGGLKFRGEPVVAHLTRIYVEGHGWRAVEDLYQVGE
+ELVVHLAGVSTRELAEALVGLRVYAEVADLPPLEEGQYYYFALIGLPVYVEGQKVGEVAD
+ILDAGAQDVLVIRGVGERLRDRAERLVPLQAPYVRVEAEGIHVEPIPGLFD
+>tr|K7QWL8|K7QWL8_THEOS
+---------MRLVEIGRFGAPYALKGGLRFRGEPVVLHLERVYVEGHGFRAVEDLYRVGE
+VLILHLAGVSTRELAEALVGLRVYAEVEDLPPLEEGQYYYFALVGLPVYVGEEQVGEVAD
+ILDAGAQDVLVIRGIGERLRDQRERLVPLQAPYVTVEEGRILVEPIPGLFD
+```
+
 ###### free slicing
 
 TO DO
