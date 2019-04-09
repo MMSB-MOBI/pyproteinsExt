@@ -9,9 +9,11 @@ def strip(fileName):
     return string
 
 class EntrySet(pyproteins.container.customCollection.EntrySet, object):
-    def __init__(self):
-        super().__init__(collectionPath="/Users/guillaumelaunay/work/data/pfam", constructor=Entry, typeCheck=None, indexer=strip)
-
+    def __init__(self, collectionPath):
+        if not collectionPath:
+            raise ValueError("Please specify a path to pfam cache argument required")
+        super().__init__(collectionPath=collectionPath, constructor=Entry, typeCheck=None, indexer=strip)
+        
     def map(self, uniprotID=None):
         if uniprotID:
             e = self.get(uniprotID)

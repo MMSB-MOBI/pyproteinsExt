@@ -200,12 +200,55 @@ TO DO
 
 #### Uniprot container
 
-TO DO
+You can access the content of any uniprot element. Corresponding XML file we ll be download locally if needed in a user defined cache directory.
 
 ```python
-import json
-uObj = uColl.get('Q8DR57')
-json.dumps(uObj, cls=EntryEncoder)
+import pyproteinsExt.uniprot as uniprot
+uniprot.proxySetting(https="https://yourproxy:port", http="http://yourproxy:port")
+
+uColl = uniprot.getUniprotCollection()
+uColl.setCache(location='/Users/guillaumelaunay/work/data/uniprot')
+uniprot.getPfamCollection().setCache(location='/Users/guillaumelaunay/work/data/pfam')
+
+obj=uColl.get("P98160")
+
+
+print(obj.GO)
+print("\n")
+print(obj.DI)
+print("\n")
+print(obj.peptideSeed())
+print("\n")
+print(obj.fasta)
+```
+
+will print
+
+```bash
+[GO:0005605:C:basal lamina{ECO:0000501}, ...]
+
+[DI-02288:Schwartz-Jampel syndrome (SJS1) {Rare autosomal recessive disorder 
+characterized by permanent myotonia (prolonged failure of muscle relaxation) 
+and skeletal dysplasia, resulting in reduced stature, kyphoscoliosis, 
+bowing of the diaphyses and irregular epiphyses.}, 
+...]
+
+{'id': 'P98160', 'desc': 'PGBM_HUMAN', 'seq': 'MGWRAAGALLLALLLHGRLLAVTHGLRAYDGLSLPEDIETVTA...}
+
+>P98160 PGBM_HUMAN
+MGWRAAGALLLALLLHGRLLAVTHGLRAYDGLSLPED...
+```
+
+#### HMMR results container
+
+1. Load multiple file iterate over domain hits
+2. iterate over proteins 
+
+```python
+import pyproteinsExt.hmmrContainer as hm
+hmmrObj = hm.parse(inputFile='hmmsearch_A.out')
+hmmrObj += hmmrObj.parse(inputFile='hmmsearch_B.out')
+hmmrObj_transpose= hmmrObj.T()
 ```
 
 #### Pfam container
@@ -214,7 +257,14 @@ json.dumps(uObj, cls=EntryEncoder)
 
 #### psicquicData container API
 
-TO DO
+Descriptions of the Psicquic service and related MITAB format can be found [here](https://psicquic.github.io/)
+
+```python
+import pyproteinsExt.psicquic as psq
+psqObj = psq.PSICQUIC(offLine=True)
+psqObj.read(mitabFile)
+psqAllInR6 = psqObj.filter(predicate=f)
+```
 
 #### mitabObject API
 

@@ -12,6 +12,8 @@ from os.path import expanduser
 PfamEntrySet = None
 uniprotEntrySet = None
 
+PfamCache = None
+
 from json import JSONEncoder
 
 import pyproteins.utils.make_json_serializable
@@ -57,7 +59,9 @@ def getUniprotCollection ():
 def getPfamCollection ():
     global PfamEntrySet
     if not PfamEntrySet:
-        PfamEntrySet = pfam.EntrySet()
+        home = expanduser("~")
+        PfamCacheDefault = home
+        PfamEntrySet = pfam.EntrySet(PfamCacheDefault)
 
     return PfamEntrySet
 
@@ -108,16 +112,20 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
     def __init__(self, **kwargs):
         home = expanduser("~")
         cachePath = home
-        if 'collectionPath' in kwargs:
-            cachePath = kwargs['collectionPath']
+      #  if 'collectionPath' in kwargs:
+      #      cachePath = kwargs['collectionPath']
+      #  if 'pfamCollectionPath' in kwargs:
+      #      PfamCache = kwargs['pfamCollectionPath']
 
         super().__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
 
     def serialize(self, **kwargs):
+        global PfamCache
         print ("serializing uniprot collection")
         super().serialize(kwargs)
-        print ("serializing pfam collection")
-        getPfamCollection().serialize(kwargs)
+        if PfamCache:
+            print ("serializing pfam collection")
+            getPfamCollection().serialize(kwargs)
 
 class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fileName=None):
@@ -142,7 +150,8 @@ class Entry(pyproteins.container.Core.Container):
         self.parseGO()
         self.parseLineage()
         self.parseAC()
-        self.parseDomain()
+        if PfamCache:
+            self.parseDomain()
         self.parseSse()
         self.parseSequence()
         self.parsePDB()
