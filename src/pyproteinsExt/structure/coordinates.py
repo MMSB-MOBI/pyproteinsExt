@@ -478,7 +478,7 @@ class Residue(object):
 			yield d
 
 	def __str__(self):
-		return "%3s %4s%c %s" %(self.name, self.num, self.iCode, self.chain)
+		return "%3s %4s%c %s" %(self.name, self.num.strip(), self.iCode, self.chain)
 
 	def __eq__(self, other):
 		return (self.chain, self.seqRes) == (other.chain, other.seqRes)
@@ -504,7 +504,7 @@ class Residue(object):
 
 	@property
 	def num(self):
-		return self.data[0].resSeq
+		return self.data[0].resSeq.strip()
 
 	@property
 	def chain(self):

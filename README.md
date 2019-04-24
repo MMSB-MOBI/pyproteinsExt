@@ -172,6 +172,7 @@ pdbObj = parser.load(file="./1syq.pdb")
 ```python
 pdbObj.SEQRES["A"]
 ```
+`A` is chain name.
 
 #### Aligning SEQRES and vald ATOM RECORD
 
@@ -191,12 +192,28 @@ pepCoor = pep.Entry(pdbObj.chain("A").peptideSeed())
 
 ```python
 import pyproteins.alignment.nw_custom as N
-nw = N.nw(gapOpen=-10, gapExtend=-0.5)
-aliResObj = nw.align(pepSeqRes, pepCoor)
+import pyproteins.alignment.scoringFunctions as scoringFunctions
+blosum = scoringFunctions.Needle().fScore
+nw = N.nw(gapOpen=-10, gapExtend=-0.5, matchScorer=blosum)
+aliResObj = nw.align(pepPDB, pepUniProt)
 print(aliResObj)
 ```
+Example with a sequence peptide from to a PDB file.
+In this illustration, PDB file is *2vkn*.
 
-TO DO
+```python
+#parsing PDB
+import pyproteinsExt.structure.coordinates as PDB
+parser = PDB.Parser()
+pdbObj = parser.load(file="path/2ns7.pdb")
+pdbObj.SEQRES
+```
+It’s possible to create a tuple with AA name and his position ; with command :
+```python
+import pyproteins.sequence.peptide as pep
+AApdb = [(pep.threeToOne(aa.name), int(aa.num)) for aa in pdbObj.byres()]
+```
+`threeToOne` is a translater of AA name code at 3 letters to AA name code at 2 letters.
 
 #### Uniprot container
 
@@ -227,10 +244,10 @@ will print
 ```bash
 [GO:0005605:C:basal lamina{ECO:0000501}, ...]
 
-[DI-02288:Schwartz-Jampel syndrome (SJS1) {Rare autosomal recessive disorder 
-characterized by permanent myotonia (prolonged failure of muscle relaxation) 
-and skeletal dysplasia, resulting in reduced stature, kyphoscoliosis, 
-bowing of the diaphyses and irregular epiphyses.}, 
+[DI-02288:Schwartz-Jampel syndrome (SJS1) {Rare autosomal recessive disorder
+characterized by permanent myotonia (prolonged failure of muscle relaxation)
+and skeletal dysplasia, resulting in reduced stature, kyphoscoliosis,
+bowing of the diaphyses and irregular epiphyses.},
 ...]
 
 {'id': 'P98160', 'desc': 'PGBM_HUMAN', 'seq': 'MGWRAAGALLLALLLHGRLLAVTHGLRAYDGLSLPEDIETVTA...}
@@ -242,7 +259,7 @@ MGWRAAGALLLALLLHGRLLAVTHGLRAYDGLSLPED...
 #### HMMR results container
 
 1. Load multiple file iterate over domain hits
-2. iterate over proteins 
+2. iterate over proteins
 
 ```python
 import pyproteinsExt.hmmrContainer as hm
