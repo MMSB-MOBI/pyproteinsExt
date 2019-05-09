@@ -158,6 +158,7 @@ class Entry(pyproteins.container.Core.Container):
         self.parseMIM()
         self.parseDI()
         self.parseORPHA()
+        self.searchGenome()
 
     def __hash__(self):
         return hash(self.id)
@@ -262,6 +263,10 @@ class Entry(pyproteins.container.Core.Container):
     def parseSequence(self):
         self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
     #    pass
+
+    def searchGenome(self): 
+        #Try EMBL
+        self.Genome=Genome(self.xmlHandler)
 
 
     @property
@@ -543,4 +548,28 @@ class UniprotKW():
         self.term = e.text
     def __repr__(self):
         return self.id + ":" + self.term
+
+class Genome():
+    def __init__(self,xmlHandler):
+        self.searchEMBL(xmlHandler)
+        self.searchRefSeq(xmlHandler)        
+
+    def searchEMBL(self,xmlHandler):
+        self.EMBLRef=[]
+        self.EMBLProteinRef=[]
+        for e in xmlHandler.find_all("dbReference", type="EMBL"):
+            if str(e.parent.name) == 'entry':
+                self.EMBLRef.append(e['id'])
+                for e_prot_id in e.find_all('property',type='protein sequence ID'):
+                    self.EMBLProteinRef.append(e_prot_id['value'])
+    
+    def searchRefSeq(self,xmlHandler):
+        self.RefSeqRef=[]
+        self.RefSeqProteinRef=[]
+        for e in xmlHandler.find_all("dbReference", type="RefSeq"):
+            if str(e.parent.name) == 'entry':
+                self.RefSeqProteinRef.append(e['id'])
+                for e_prot_id in e.find_all('property',type='nucleotide sequence ID'):
+                    self.RefSeqRef.append(e_prot_id['value'])
+
 
