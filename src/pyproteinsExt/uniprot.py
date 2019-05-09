@@ -232,7 +232,7 @@ class Entry(pyproteins.container.Core.Container):
             self.pdbRef.append(PDBref(e))
 
     def parseDomain(self):
-    	try: 
+        try: 
             self.domains=getPfamCollection().map(uniprotID=self.id)
         except: 
             self.domains=[]
