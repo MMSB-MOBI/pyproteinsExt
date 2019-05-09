@@ -152,6 +152,7 @@ class Entry(pyproteins.container.Core.Container):
         self.parseAC()
         if PfamCache:
             self.parseDomain()
+        self.parseDomain()     
         self.parseSse()
         self.parseSequence()
         self.parsePDB()
@@ -231,21 +232,26 @@ class Entry(pyproteins.container.Core.Container):
             self.pdbRef.append(PDBref(e))
 
     def parseDomain(self):
-        self.domains = []
-        for e in self.xmlHandler.find_all("feature", type="domain"):
-            buf = Domain(e, self.id)
-            if buf.description:
-                self.domains.append(Domain(e, self.id))
-        for e in self.xmlHandler.find_all("feature", type="repeat"):
-            buf = Domain(e, self.id)
-            if buf.description:
-                self.domains.append(Domain(e, self.id))
-        if not self.domains:
+    	try: 
+            self.domains=getPfamCollection().map(uniprotID=self.id)
+        except: 
+            self.domains=[]
+
+        #self.domains = []
+        #for e in self.xmlHandler.find_all("feature", type="domain"):
+        #    buf = Domain(e, self.id)
+        #    if buf.description:
+        #        self.domains.append(Domain(e, self.id))
+        #for e in self.xmlHandler.find_all("feature", type="repeat"):
+        #    buf = Domain(e, self.id)
+        #    if buf.description:
+        #        self.domains.append(Domain(e, self.id))
+        #if not self.domains:
         #    print "No domain data found for " + self.id + ", attempting pfam"
-            try :
-                self.domains = getPfamCollection().map(uniprotID=self.id)
-            except ValueError as msg:
-                print ("Could not bind uniprot to its pfam ressources reason\n" + str(msg))
+        #    try :
+        #        self.domains = getPfamCollection().map(uniprotID=self.id)
+        #    except ValueError as msg:
+        #        print ("Could not bind uniprot to its pfam ressources reason\n" + str(msg))
 
     def parseSse(self):
         self.sse = []
