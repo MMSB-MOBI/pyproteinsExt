@@ -198,23 +198,6 @@ def _parseBuffer(input):
             m = reSum.search(l)        
             if m:
                 scores = m.group(1).split()
-                summary.append({
-                    'fullSequence' : {
-                        'E-value'    : scores[0],
-                        'score'      : scores[1],
-                        'bias'       : scores[2]
-                    },
-                    'bestOneDomain' : {
-                        'E-value'    : scores[3],
-                        'score'      : scores[4],
-                        'bias'       : scores[5]
-                    },
-                    'exp'        : scores[6],
-                    'N'          : m.group(3),
-                    'Model'   : m.group(4),
-                    'Description': m.group(5),
-                    'included'   : inclusionBool
-                })
                     #print (summary[-1])
         if detailBool:
             if l.startswith(">>"):
