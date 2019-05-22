@@ -105,6 +105,8 @@ class Container(object):
     def addIndex(self,dic,index,match):
         if index not in dic: 
             dic[index]=set()
+        dic[index].add(match)    
+
     def __iter__(self): 
         '''Iter through matches'''
         for d in self.dIndex: 
@@ -119,8 +121,13 @@ class Container(object):
         dom_id=dom_id.pop()
         self.addIndex(self.pIndex,prot_id,match)
         self.addIndex(self.dIndex,dom_id,match)
+        
     def filter(self,fPredicat,**kwargs):
-        self.details=[align for align in self if fPredicat(align,**kwargs)]
+        new_container=Container()
+        for match in self: 
+            if fPredicat(match,**kwargs):
+                new_container.add(match)
+        return new_container
 
 def _parseBuffer(input):
     dIndex={}
