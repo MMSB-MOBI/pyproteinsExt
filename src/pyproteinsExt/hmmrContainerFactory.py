@@ -30,38 +30,39 @@ reStrandsLine = re.compile("^([\s]*([\S]+)[\s]+([\d]+)[\s])([\S]+)[\s]([\d]+)[\s
 
 #reInstance = re.compile('(# hmmsearch.+?(?=\[ok\])\[ok\])', re.DOTALL)
 
-def parse(inputFile=None):
+def parse(inputFiles=None):
     upType = None
     bigBuffer = ''
-    if inputFile:
-        fnOpen = open
-        t = 'r'
-        if inputFile.endswith('gz'):  
-            fnOpen = gzip.open
-            t = 'rt'
-  
-        try:
-            f = fnOpen(inputFile, t)
-        except IOError:
-            print ("Could not read file:", inputFile)
-            return Container()
-        
-        with f:
-            for l in f:
-                bigBuffer += l
+    mainContainer = Container()
+    for inputFile in inputFiles: 
+        if inputFile:
+            print(inputFile)
+            fnOpen = open
+            t = 'r'
+            if inputFile.endswith('gz'):  
+                fnOpen = gzip.open
+                t = 'rt'
+    
+            try:
+                f = fnOpen(inputFile, t)
+            except IOError:
+                print ("Could not read file:", inputFile)
+                return Container()
+            
+            with f:
+                for l in f:
+                    bigBuffer += l
+                    
+                    #print(l)
+
+                runReports = reInstance.findall(bigBuffer)
+                #print(runReports)
+                if not runReports:
+                    raise ValueError("Could not parse upper level in provided hmm(scan/search) file")
                 
-                #print(l)
-
-            runReports = reInstance.findall(bigBuffer)
-            if not runReports:
-                raise ValueError("Could not parse upper level in provided hmm(scan/search) file")
-            
-
-            mainContainer = Container()
-            
-            for d in runReports:           
-                mainContainer += Container(input=io.StringIO(d[0]), upType=d[1])
-            return mainContainer
+                for d in runReports:  
+                    mainContainer.addParsing(Container(input=io.StringIO(d[0]), upType=d[1]))
+    return mainContainer
 
 class Container(object):
     def __init__(self, input=None, upType=None):
@@ -69,14 +70,14 @@ class Container(object):
        # self.targetSequenceDatabase=None   #./Trembl_50.fasta
        # self.query=None                    #PF08022_full  [M=104]
         self.upType = upType
-        self._transpose = None
         if not input:
-            self.summary = []
-            self.details = []
+            self.dIndex={}
+            self.pIndex={}
         else:
-            self.summary, self.details = _parseBuffer(input)
+            self.dIndex,self.pIndex = _parseBuffer(input)
+            
 
-    def __add__(self, other):
+    def addParsing(self, other):
         if self.upType != other.upType:
             if self.upType == None:
                 self.upType = other.upType
@@ -85,37 +86,32 @@ class Container(object):
         if self.upType != other.upType:
             raise TypeError('Adding', self.upType,' and ', other.upType)
 
-        self.summary.extend(other.summary)
-        self.details.extend(other.details)
+        #self.summary.extend(other.summary)
+        #self.details.extend(other.details)
+        self.updateParsing(other)
         return self
 
-    def __len__(self):
-        return len(self.details)
+    def updateParsing(self,other):
+        for d in other.dIndex: 
+            if d not in self.dIndex: 
+                self.dIndex[d]=set()
+            self.dIndex[d].update(other.dIndex[d])    
 
-# returns a list of proteins referencing HMM hits
-    def T(self):
-        if not self._transpose:
-            t = {}
-            for d in self.details:
-                if not d.aliShortID:
-                    continue
-                if d.aliShortID not in t:
-                    t[d.aliShortID] = {}
-                if d.hmmID in t[d.aliShortID]:
-                    print('Warning(' + d.aliShortID + '), multiple hit w/ identical HMM query on a single protein')
-                else :
-                    t[d.aliShortID][d.hmmID] = []
-        
-                t[d.aliShortID][d.hmmID].append(d)    
-            self._transpose = t
-        
-        return self._transpose
-        
+        for p in other.pIndex:
+            if p not in self.pIndex:
+                self.pIndex[p]=set()
+            self.pIndex[p].update(other.pIndex[p])        
 
+    #def __iter__(self): 
+    #    for align in self.details: 
+    #        yield align  
+
+    def filter(self,fPredicat,**kwargs):
+        self.details=[align for align in self if fPredicat(align,**kwargs)]
 
 def _parseBuffer(input):
-    summary = []
-    details = []
+    dIndex={}
+    pIndex={}
     inclusionBool = True
     readBool = False
     detailBool = False
@@ -214,8 +210,16 @@ def _parseBuffer(input):
     if not queryID:
         raise ValueError('Could not find query identifier in header')
     #print(detailBuffer)
-    details = [ Match(rawData, queryID) for rawData in detailBuffer ]
-    return (summary, details)
+    dIndex[queryID]=set()
+    for rawData in detailBuffer: 
+        match=Match(rawData,queryID)
+        dIndex[queryID].add(match)
+        subjctID=match.aliShortID
+        if subjctID not in pIndex:
+            pIndex[subjctID]=set()
+        pIndex[subjctID].add(match)    
+    #details = [ Match(rawData, queryID) for rawData in detailBuffer ]
+    return (dIndex,pIndex)
 
 class Match (object):
     def __init__(self, bufferString, queryID):
