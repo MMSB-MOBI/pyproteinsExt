@@ -102,9 +102,14 @@ class Container(object):
                 self.pIndex[p]=set()
             self.pIndex[p].update(other.pIndex[p])        
 
-    #def __iter__(self): 
-    #    for align in self.details: 
-    #        yield align  
+    def addIndex(self,dic,index,match):
+        if index not in dic: 
+            dic[index]=set()
+    def __iter__(self): 
+        '''Iter through matches'''
+        for d in self.dIndex: 
+            for m in self.dIndex[d]: 
+                yield m  
 
     def filter(self,fPredicat,**kwargs):
         self.details=[align for align in self if fPredicat(align,**kwargs)]
