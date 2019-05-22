@@ -111,6 +111,14 @@ class Container(object):
             for m in self.dIndex[d]: 
                 yield m  
 
+    def add(self,match):
+        prot_id=match.aliShortID
+        dom_id=set([hit.hmmID for hit in match.data])     
+        if len(dom_id)>1:
+            raise Exception("dom_id can't have length > 1. Check your code.")   
+        dom_id=dom_id.pop()
+        self.addIndex(self.pIndex,prot_id,match)
+        self.addIndex(self.dIndex,dom_id,match)
     def filter(self,fPredicat,**kwargs):
         self.details=[align for align in self if fPredicat(align,**kwargs)]
 
