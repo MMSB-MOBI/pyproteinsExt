@@ -30,13 +30,12 @@ reStrandsLine = re.compile("^([\s]*([\S]+)[\s]+([\d]+)[\s])([\S]+)[\s]([\d]+)[\s
 
 #reInstance = re.compile('(# hmmsearch.+?(?=\[ok\])\[ok\])', re.DOTALL)
 
-def parse(inputFiles=None):
+def parse(*inputFiles):
     upType = None
     bigBuffer = ''
     mainContainer = Container()
     for inputFile in inputFiles: 
         if inputFile:
-            print(inputFile)
             fnOpen = open
             t = 'r'
             if inputFile.endswith('gz'):  
@@ -61,8 +60,9 @@ def parse(inputFiles=None):
                     raise ValueError("Could not parse upper level in provided hmm(scan/search) file")
                 
                 for d in runReports:  
-                    mainContainer.addParsing(Container(input=io.StringIO(d[0]), upType=d[1]))
+                    mainContainer.addParsing(Container(input=io.StringIO(d[0]), upType=d[1]))           
     return mainContainer
+
 
 class Container(object):
     def __init__(self, input=None, upType=None):
@@ -154,20 +154,8 @@ def _parseBuffer(input):
 
         if re.search('\-\-\- full sequence \-\-\-   \-\-\- best 1 domain \-\-\-    \-#dom\-', l):
             #print ("UP")
-            summaryBool = True
             inclusionBool = True
             continue
-
-        if summaryBool and reEmpty.match(l):
-            #print ("LOW")
-            summaryBool = False
-            continue
-
-        #    print("?")
-        #    if l.starstwith('Domain annotation for each model'):         
-        #        print("NN")  
-        #        summaryBool = False
-        #        continue
 
         if reDetail.search(l):
             readBool = False
@@ -185,20 +173,6 @@ def _parseBuffer(input):
         else:
             emptyLinesInRow = 0
 
-
-        #if readBool:
-            #buf = l.split("    ")
-            #if len(buf) == 10:
-            #print(str(len(buf))+ ':: ' + str(buf))
-
-        if summaryBool:
-            if reInclude.search(l):
-                inclusionBool = False
-            #print("Summary parsing attempt")
-            m = reSum.search(l)        
-            if m:
-                scores = m.group(1).split()
-                    #print (summary[-1])
         if detailBool:
             if l.startswith(">>"):
                 detailBuffer.append(l)
