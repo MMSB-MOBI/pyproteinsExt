@@ -122,13 +122,14 @@ class Container(object):
             dom_id=dom_id.pop()
             self.addIndex(self.pIndex,prot_id,match)
             self.addIndex(self.dIndex,dom_id,match)
-        
-    def filter(self,fPredicat,**kwargs):
+
+    def filterProteins(self,fPredicat,**kwargs):
         new_container=Container()
-        for match in self: 
-            if fPredicat(match,**kwargs):
-                new_container.add(match)
-        return new_container
+        for protein in self.pIndex: 
+            matches=self.pIndex[protein]
+            if fPredicat(matches,**kwargs):
+                new_container.add(*matches)
+        return new_container        
 
 def _parseBuffer(input):
     dIndex={}
