@@ -191,12 +191,15 @@ def _parseBuffer(input):
     #print(detailBuffer)
     dIndex[queryID]=set()
     for rawData in detailBuffer: 
+        #print(rawData)
         match=Match(rawData,queryID)
-        dIndex[queryID].add(match)
         subjctID=match.aliShortID
+        if not subjctID:
+            continue    
         if subjctID not in pIndex:
             pIndex[subjctID]=set()
-        pIndex[subjctID].add(match)    
+        pIndex[subjctID].add(match) 
+        dIndex[queryID].add(match)   
     #details = [ Match(rawData, queryID) for rawData in detailBuffer ]
     return (dIndex,pIndex)
 
@@ -208,14 +211,16 @@ class Match (object):
         self.queryID = queryID
         self.parseDetailEntry(bufferString)
         
-    def __hash__(self):
-        return hash(self.aliLongID + self.hmmID)
+    #def __hash__(self):
+    #    return hash(self.aliLongID + self.hmmID)
 
     def parseDetailEntry(self, bufferString):
         buff = bufferString.split('  == domain ')
         self.data = []
         if len(buff) == 1:
             print ("Warning:: " + buff[0])
+            self.aliLongID=buff[0].split("\n")[0].lstrip(">> ")
+            self.aliShortID=self.aliLongID.split(" ")[0]
             self.data =[]
             return
 
