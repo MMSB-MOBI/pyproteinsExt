@@ -28,7 +28,7 @@ def check_if_same_proteins(dic_container):
 
 
 def parse(hmmrOut,tmhmmOut,fastaOut):
-    container=Container()
+    container=TopologyContainer()
     hmmrContainer=hmmr.parse(hmmrOut)
     tmhmmContainer=tmhmm.parse(tmhmmOut)
     fastaContainer=fasta.parse(fastaOut)    
@@ -36,12 +36,12 @@ def parse(hmmrOut,tmhmmOut,fastaOut):
     dic_container={'hmmr':hmmrContainer,'tmhmm':tmhmmContainer,'fasta':fastaContainer}
     if not check_if_same_proteins(dic_container):
         raise Exception("not same proteins ",hmmrOut,tmhmmOut,"Check !")
-    container.addParsing(Container(input=dic_container))   
+    container.addParsing(TopologyContainer(input=dic_container))   
     return container
 
-class Container(pyproteinsExt.proteinContainer.Container):
+class TopologyContainer(pyproteinsExt.proteinContainer.Container):
     def __init__(self, input=None):
-        super().__init__(_parseBuffer,input)
+        super().__init__(_parseBuffer,input)  
 
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta):
