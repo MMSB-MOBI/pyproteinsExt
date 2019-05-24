@@ -4,16 +4,17 @@ import pyproteinsExt.fastaContainerFactory as fasta
 import pyproteinsExt.proteinContainer
 
 def check_if_same_proteins(dic_container):
-    list_proteins=[]
+    hmmr_proteins=set()
+    tmhmm_proteins=set()
+    fasta_proteins=set()
     if dic_container['hmmr']:
         hmmr_proteins=set([p for p in dic_container['hmmr'].pIndex])
-        list_proteins.append(hmmr_proteins)
     if dic_container['tmhmm']:    
         tmhmm_proteins=set([e.prot for e in dic_container['tmhmm']])
-        list_proteins.append(tmhmm_proteins)
     if dic_container['fasta']:
         fasta_proteins=set([e.prot for e in dic_container['fasta']])
-        list_proteins.append(fasta_proteins)  
+
+    list_proteins=[hmmr_proteins,tmhmm_proteins,fasta_proteins]
     if len(list_proteins)<=1: 
         return True
     for i in range(len(list_proteins)):
@@ -31,7 +32,10 @@ def parse(hmmrOut,tmhmmOut,fastaOut):
     container=TopologyContainer()
     hmmrContainer=hmmr.parse(hmmrOut)
     tmhmmContainer=tmhmm.parse(tmhmmOut)
-    fastaContainer=fasta.parse(fastaOut)    
+    fastaContainer=fasta.parse(fastaOut)   
+
+    #if len(fastaContainer)==0: 
+    #    return container 
 
     dic_container={'hmmr':hmmrContainer,'tmhmm':tmhmmContainer,'fasta':fastaContainer}
     if not check_if_same_proteins(dic_container):
