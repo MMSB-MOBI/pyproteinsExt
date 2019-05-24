@@ -49,12 +49,34 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
             if fPredicat(e,**kwargs):
                 new_container.addEntry(e)
         return new_container
+
+    def get_domain_mfasta(self,domain,evalue):
+        mfasta=''
+        for e in self: 
+            for match in e.hmmr: 
+                for hit in match.data:
+                    if hit.hmmID == domain and float(hit.iEvalue)<=evalue:
+                        header=">"+hit.aliID+" "+hit.hmmID
+                        #print(header)
+                        seq=self.get_seq(hit)
+                        mfasta+=header+"\n"+seq+"\n"
+        return mfasta                
+
+    def get_seq(self,hit):
+        seq=hit.aliStringLetters   
+        seq=seq.replace("-","")
+        seq=seq.upper()
+        return seq    
+
+
+
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta):
         self.prot=prot
         self.hmmr=hmmr
         self.tmhmm=tmhmm
         self.fasta=fasta
+
 
 def _parseBuffer(dic_container):
     hmmrContainer=dic_container['hmmr']
