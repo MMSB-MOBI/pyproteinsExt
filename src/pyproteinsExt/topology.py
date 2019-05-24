@@ -72,6 +72,11 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
         seq=seq.upper()
         return seq    
 
+    def proteins_mfasta(self):
+        mfasta=''
+        for e in self: 
+            mfasta+=">"+e.fasta.header+"\n"+e.fasta.seq+"\n"
+        return mfasta    
 
 
 class Topology(): 
