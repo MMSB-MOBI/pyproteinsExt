@@ -27,12 +27,5 @@ class Container(object):
         for protein in self.entries: 
             yield self.entries[protein]  
 
-    def filter(self,fPredicat,**kwargs): 
-        new_container=Container()
-        for e in self : 
-            if fPredicat(e,**kwargs):
-                new_container.addEntry(e)
-        return new_container
-
     def parsing(self,input,fParsing):
-        return fParsing(input)        
+        return fParsing(input)    

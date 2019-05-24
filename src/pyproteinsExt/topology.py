@@ -43,6 +43,12 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
     def __init__(self, input=None):
         super().__init__(_parseBuffer,input)  
 
+    def filter(self,fPredicat,**kwargs): 
+        new_container=TopologyContainer()
+        for e in self : 
+            if fPredicat(e,**kwargs):
+                new_container.addEntry(e)
+        return new_container
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta):
         self.prot=prot
