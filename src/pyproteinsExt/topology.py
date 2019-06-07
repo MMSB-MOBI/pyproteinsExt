@@ -129,6 +129,38 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
     def reinitialize_overlapped_domains(self):
         for h in [h for e in self for h in e.hmmr ]: 
             h.reinitialize_overlapped_hits()      
+    def create_ete3_tree(self):
+        ncbi=NCBITaxa()
+        taxids=set([e.taxo.taxid for e in self])
+        if None in taxids: 
+            raise Exception("Entries doesn't have taxids")
+        tree=ncbi.get_topology(list(taxids))
+        
+        #Complete Tree object with list of domains and proteins for each node 
+        node_list=[]
+        for n in tree.traverse('postorder'): #Browse tree in postorder, starts from leaf and ascend to root 
+            n.sameDomainNode=set()
+            node_list.append(n)
+            n.domains=set([h.domain for e in self for h in e.hmmr if e.taxo.taxid==n.name])
+            n.proteins=set([e.prot  for e in self if e.taxo.taxid==n.name])
+            if n.get_descendants():
+                for child in n.children: 
+                    n.domains.update(child.domains)
+                    n.proteins.update(child.proteins)
+
+        #Complete Tree object with list of nodes with same domains for each node            
+        c=0
+        for i in range(len(node_list)):
+            c+=1
+            for j in range(i+1,len(node_list)):
+                n1=node_list[i]
+                n2=node_list[j]
+                if len(n1.domains)==len(n2.domains):
+                    if not n1.domains.difference(n2.domains):
+                        n1.sameDomainNode.add(n2)
+                        n2.sameDomainNode.add(n1)
+        self.ete3_tree=tree                   
+            
     def create_domain_entries(self):
         def initialize_domain_entries():
             domain_entries={}
