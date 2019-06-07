@@ -91,6 +91,19 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
             hits=[h for h in container.hmmrEntries if h.prot==e.prot]
             e.hmmr+=hits
 
+    def filter_hit(self,fPredicat,**kwargs):
+        new_container=TopologyContainer()
+        for e in self: 
+            add=False
+            hit_to_add=[]
+            for hit in e.hmmr: 
+                if fPredicat(hit,**kwargs):
+                    add=True
+                    hit_to_add.append(hit)
+            if add :     
+                new_e=Topology(e.prot,hit_to_add,e.tmhmm,e.fasta,e.taxo)    
+                new_container.addEntry(new_e)
+        return new_container 
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
