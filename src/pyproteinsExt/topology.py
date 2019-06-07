@@ -78,6 +78,18 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
             mfasta+=">"+e.fasta.header+"\n"+e.fasta.seq+"\n"
         return mfasta    
 
+    def complete_hmmr(self,hmmscan_out):  
+        container=hmmr.parse(hmmscan_out)
+        new_proteins=set([h.prot for h in container.hmmrEntries])
+        self_proteins=set(self.entries.keys())
+        if len(new_proteins)!=len(self_proteins):
+            raise Exception("full Pfam proteins and original proteins are not the same")
+        else: 
+            if new_proteins.difference(self_proteins):
+                raise Exception("full Pfam proteins and original proteins are not the same")        
+        for e in self: 
+            hits=[h for h in container.hmmrEntries if h.prot==e.prot]
+            e.hmmr+=hits
 
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):

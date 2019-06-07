@@ -4,7 +4,6 @@ class Container(object):
        # self.targetSequenceDatabase=None   #./Trembl_50.fasta
        # self.query=None                    #PF08022_full  [M=104]
         #self.upType = upType
-        self._transpose = None
         if not input:
            self.entries={}
         else:
@@ -14,7 +13,7 @@ class Container(object):
         for k in other.entries: 
             if k not in self.entries: 
                 self.entries[k]=other.entries[k]
-        return self
+        return self    
 
     def addEntry(self,new_entry): 
         if not new_entry.prot in self.entries: 
