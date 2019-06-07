@@ -73,8 +73,9 @@ class Container(object):
         if not input:
             self.dIndex={}
             self.pIndex={}
+            self.hmmrEntries=set()
         else:
-            self.dIndex,self.pIndex = _parseBuffer(input)
+            self.dIndex,self.pIndex,self.hmmrEntries = _parseBuffer(input)
             
 
     def addParsing(self, other):
@@ -101,6 +102,8 @@ class Container(object):
             if p not in self.pIndex:
                 self.pIndex[p]=set()
             self.pIndex[p].update(other.pIndex[p])        
+
+        self.hmmrEntries.update(other.hmmrEntries)    
 
     def addIndex(self,dic,index,match):
         if index not in dic: 
@@ -134,6 +137,7 @@ class Container(object):
 def _parseBuffer(input):
     dIndex={}
     pIndex={}
+    hmmrEntries=set()
     inclusionBool = True
     readBool = False
     detailBool = False
@@ -199,9 +203,17 @@ def _parseBuffer(input):
         if subjctID not in pIndex:
             pIndex[subjctID]=set()
         pIndex[subjctID].add(match) 
-        dIndex[queryID].add(match)   
+        dIndex[queryID].add(match)  
+        #print(match.data) 
+        if match.data:
+            for hit in match.data:
+                domain=hit.hmmID
+                prot=hit.aliID
+                hmmrEntries.add(HMMObj(prot,domain,hit))
+        else: 
+            hmmrEntries.add(HMMObj(subjctID,None,None))        
     #details = [ Match(rawData, queryID) for rawData in detailBuffer ]
-    return (dIndex,pIndex)
+    return (dIndex,pIndex,hmmrEntries)
 
 class Match (object):
     def __init__(self, bufferString, queryID):
@@ -406,3 +418,9 @@ def plumbParse(buffer, index, mainStringAccumulator, stuffContainer, reSymbolStu
         index += -1 if goingUp else 1
        # print ("-->", index)
     return mainStringAccumulator, stuffContainer
+class HMMObj():
+    def __init__(self,prot,domain,hit): 
+        self.prot=prot
+        self.domain=domain
+        self.hit=hit   
+        self.overlapped_hits=[]
