@@ -202,6 +202,67 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
                         dist=self.ete3_tree.get_distance(list_taxids[i],list_taxids[j])
                         distances.append(dist)
                 d.mean_distance=mean(distances)      
+
+    def create_domain_graph(self,core_domains):
+
+        def get_vertex_size(nb_domain,interval,min_size):
+            if nb_domain==1: 
+                return min_size 
+            else: 
+                size=min_size+interval*(nb_domain-1)
+                return size
+
+        def get_edge_size(nb_occ,interval): 
+            return nb_occ*interval     
+
+        g=Graph()
+        dic_edges={}
+        dic_nb_domain={}
+        all_domains=set()
+        for p in self: 
+            domains=set([h.domain for h in p.hmmr])
+            for cd in core_domains: 
+                domains.discard(cd)
+            related_domains=domains.copy()
+            for d in domains:
+                if d not in core_domains: 
+                    if d not in dic_nb_domain :
+                        dic_nb_domain[d]=0 
+                    dic_nb_domain[d]+=1    
+                related_domains.remove(d)
+                all_domains.add(d)
+                for d2 in related_domains : 
+                    edge=tuple(sorted((d,d2)))
+                    if edge not in dic_edges: 
+                        dic_edges[edge]=0
+                    dic_edges[edge]+=1  
+                    
+        list_edges=[]
+        list_weight=[]
+        for e in dic_edges: 
+            list_edges.append(e)
+            list_weight.append(dic_edges[e])  
+        
+        g=Graph()
+        g.add_vertices(len(all_domains))
+        g.vs["name"]=list(all_domains)
+        g.vs["label"]=g.vs["name"]
+        g.add_edges(list_edges)
+        for vertex in g.vs : 
+            vertex["weight"]=dic_nb_domain[vertex["name"]]
+            vertex["size"]=get_vertex_size(vertex["weight"],2,5)
+        for e in g.es : 
+            source=[v for v in g.vs if v.index==e.source][0] 
+            target=[v for v in g.vs if v.index==e.target][0]
+            edge_tuple=tuple(sorted((source["name"],target["name"])))
+            nb_occ=dic_edges[edge_tuple]
+            min_domains=min(source["weight"],target["weight"])
+            e["weight"]=nb_occ/min_domains
+            e["label"]=round(nb_occ/min_domains,2)
+            e['width']=e["weight"]*5
+
+        return g
+                        
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
