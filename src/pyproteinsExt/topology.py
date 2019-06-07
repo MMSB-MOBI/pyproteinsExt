@@ -129,6 +129,22 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
     def reinitialize_overlapped_domains(self):
         for h in [h for e in self for h in e.hmmr ]: 
             h.reinitialize_overlapped_hits()      
+    def create_domain_entries(self):
+        def initialize_domain_entries():
+            domain_entries={}
+            domains=set([h.domain for e in self for h in e.hmmr])
+            for d in domains: 
+                domainObj=Domain(d,set(),set(),set())
+                domain_entries[d]=domainObj 
+            return domain_entries    
+        domain_entries=initialize_domain_entries()
+        for e in self:
+            for h in e.hmmr: 
+                domain_entries[h.domain].hits.add(h)
+                domain_entries[h.domain].proteins.add(e.prot)
+                domain_entries[h.domain].taxo.add(e.taxo)
+        domain_entries=OrderedDict(sorted(domain_entries.items(),key=lambda kv: len(kv[1].proteins),reverse=True))        
+        self.domain_entries=domain_entries    
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
@@ -150,18 +166,28 @@ class Topology():
                 taxrank=taxrank_dic[int(taxid)]
         self.taxo=Taxo(taxid,taxname,taxrank)  
 
+class Domain(): 
+    def __init__(self,name,hits,proteins,taxo):
+        self.name=name
+        self.hits=hits
+        self.proteins=proteins
+        self.taxo=taxo
+        self.upper_node=None
+        self.mean_distance=None
+
 def _parseBuffer(dic_container):
     hmmrContainer=dic_container['hmmr']
     tmhmmContainer=dic_container['tmhmm']
     fastaContainer=dic_container['fasta']
     dic_obj={}
-    for p in hmmrContainer.pIndex: 
-        hmmr=hmmrContainer.pIndex[p]
+    for f in fastaContainer: 
+        p=f.prot
+        hmmr=[h for h in hmmrContainer.hmmrEntries if h.prot==p]
         tmhmm=tmhmmContainer.entries[p]
         fasta=fastaContainer.entries[p]
-        obj=Topology(p,hmmrContainer.pIndex[p],tmhmm,fasta)
+        obj=Topology(p,hmmr,tmhmm,fasta)
         dic_obj[p]=obj
-    return dic_obj                   
+    return dic_obj   
 
 class Taxo():
     def __init__(self,taxid,taxname,taxrank):
