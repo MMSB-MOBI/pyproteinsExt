@@ -2,13 +2,19 @@ import pyproteinsExt.hmmrContainerFactory as hmmr
 import pyproteinsExt.tmhmmContainerFactory as tmhmm
 import pyproteinsExt.fastaContainerFactory as fasta
 import pyproteinsExt.proteinContainer
+from collections import OrderedDict
+import re
+from ete3 import NCBITaxa
+from ete3 import Tree
+from statistics import mean
+from igraph import Graph
 
 def check_if_same_proteins(dic_container):
     hmmr_proteins=set()
     tmhmm_proteins=set()
     fasta_proteins=set()
     if dic_container['hmmr']:
-        hmmr_proteins=set([p for p in dic_container['hmmr'].pIndex])
+        hmmr_proteins=set([h.prot for h in dic_container['hmmr'].hmmrEntries])
     if dic_container['tmhmm']:    
         tmhmm_proteins=set([e.prot for e in dic_container['tmhmm']])
     if dic_container['fasta']:
@@ -44,26 +50,29 @@ def parse(hmmrOut,tmhmmOut,fastaOut):
     return container
 
 class TopologyContainer(pyproteinsExt.proteinContainer.Container):
-    def __init__(self, input=None):
-        super().__init__(_parseBuffer,input)  
-
+    def __init__(self, input=None,ete3_tree=None,domain_entries=None):
+        super().__init__(_parseBuffer,input)
+        self.ete3_tree=ete3_tree
+        self.domain_entries=domain_entries
+          
     def filter(self,fPredicat,**kwargs): 
         new_container=TopologyContainer()
         for e in self : 
             if fPredicat(e,**kwargs):
                 new_container.addEntry(e)
-        return new_container
+        return new_container        
 
-    def get_domain_mfasta(self,domain,evalue):
+    def get_domain_mfasta(self,domain):
         mfasta=''
         for e in self: 
-            for match in e.hmmr: 
-                for hit in match.data:
-                    if hit.hmmID == domain and float(hit.iEvalue)<=evalue:
-                        header=">"+hit.aliID+" "+hit.hmmID
-                        #print(header)
-                        seq=self.get_seq(hit)
-                        mfasta+=header+"\n"+seq+"\n"
+            for hit in e.hmmr: 
+                if hit.domain == domain:
+                    if float(hit.hit.iEvalue)>1e-3:
+                        print("OOOO")
+                    header=">"+hit.prot+" "+hit.domain
+                    #print(header)
+                    seq=self.get_seq(hit.hit)
+                    mfasta+=header+"\n"+seq+"\n"
         return mfasta                
 
     def get_seq(self,hit):
@@ -76,7 +85,9 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
         mfasta=''
         for e in self: 
             mfasta+=">"+e.fasta.header+"\n"+e.fasta.seq+"\n"
-        return mfasta    
+        return mfasta 
+
+    '''Redefine addParsing parent method to include domain_entries'''
 
     def complete_hmmr(self,hmmscan_out):  
         container=hmmr.parse(hmmscan_out)
@@ -114,6 +125,10 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
                     if hit1.is_overlapping(hit2,overlap_accept_size):
                         hit1.overlapped_hits.append(hit2)
                         hit2.overlapped_hits.append(hit1)
+
+    def reinitialize_overlapped_domains(self):
+        for h in [h for e in self for h in e.hmmr ]: 
+            h.reinitialize_overlapped_hits()      
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
