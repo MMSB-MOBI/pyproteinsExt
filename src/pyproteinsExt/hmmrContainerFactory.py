@@ -418,12 +418,14 @@ def plumbParse(buffer, index, mainStringAccumulator, stuffContainer, reSymbolStu
         index += -1 if goingUp else 1
        # print ("-->", index)
     return mainStringAccumulator, stuffContainer
+
 class HMMObj():
     def __init__(self,prot,domain,hit): 
         self.prot=prot
         self.domain=domain
         self.hit=hit   
         self.overlapped_hits=[]
+
     def is_overlapping(self,other_hit,accept_overlap_size):
         start1=int(self.hit.envFrom)
         end1=int(self.hit.envTo)
@@ -434,3 +436,6 @@ class HMMObj():
         if len(residues1.intersection(residues2))>accept_overlap_size:
             return True
         return False   
+
+    def reinitialize_overlapped_hits(self):
+        self.overlapped_hits=[]     
