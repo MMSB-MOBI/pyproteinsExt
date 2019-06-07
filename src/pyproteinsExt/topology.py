@@ -104,6 +104,16 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
                 new_e=Topology(e.prot,hit_to_add,e.tmhmm,e.fasta,e.taxo)    
                 new_container.addEntry(new_e)
         return new_container 
+    def compute_overlapped_domains(self,overlap_accept_size):
+        self.reinitialize_overlapped_domains()
+        for e in self: 
+            for i in range(len(e.hmmr)):
+                for j in range(i+1,len(e.hmmr)):
+                    hit1=e.hmmr[i]
+                    hit2=e.hmmr[j]
+                    if hit1.is_overlapping(hit2,overlap_accept_size):
+                        hit1.overlapped_hits.append(hit2)
+                        hit2.overlapped_hits.append(hit1)
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
