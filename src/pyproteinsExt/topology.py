@@ -80,12 +80,25 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
 
 
 class Topology(): 
-    def __init__(self,prot,hmmr,tmhmm,fasta):
+    def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
         self.hmmr=hmmr
         self.tmhmm=tmhmm
         self.fasta=fasta
+        self.taxo=taxo
 
+    def get_taxo(self,function_get_taxid):
+        ncbi=NCBITaxa()
+        taxname=None
+        taxrank=None
+        taxid=function_get_taxid(self)
+        taxname_dic=ncbi.get_taxid_translator([taxid])
+        if taxname_dic:
+            taxname=taxname_dic[int(taxid)]
+            taxrank_dic=ncbi.get_rank([taxid])
+            if taxrank_dic : 
+                taxrank=taxrank_dic[int(taxid)]
+        self.taxo=Taxo(taxid,taxname,taxrank)  
 
 def _parseBuffer(dic_container):
     hmmrContainer=dic_container['hmmr']
@@ -100,3 +113,8 @@ def _parseBuffer(dic_container):
         dic_obj[p]=obj
     return dic_obj                   
 
+class Taxo():
+    def __init__(self,taxid,taxname,taxrank):
+        self.taxid=taxid
+        self.taxname=taxname
+        self.taxrank=taxrank
