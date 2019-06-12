@@ -179,7 +179,7 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
         self.domain_entries=domain_entries    
     
 
-    def compute_upper_node_and_distance(self):
+    def compute_upper_node_and_distance(self,core_domains=[]):
         ncbi=NCBITaxa()
         if not self.domain_entries:
             raise Exception("Compute domain_entries first.")
@@ -187,21 +187,22 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
             raise Exception("Compute ete3_tree first.")
 
         for d in self.domain_entries.values(): 
-            print(d.name)
-            distances=[]
-            if len(d.taxo)==1:
-                d.upper_node=self.ete3_tree.search_node(name=d.taxo[0].taxid)[0]
-                d.mean_distance=0
-            else:
-                list_taxids=list(set([t.taxid for t in d.taxo]))
-                domain_tree=ncbi.get_topology(list_taxids)
-                traverse_generator=domain_tree.traverse()
-                d.upper_node=next(traverse_generator)   
-                for i in range(len(list_taxids)):
-                    for j in range(i+1,len(list_taxids)):
-                        dist=self.ete3_tree.get_distance(list_taxids[i],list_taxids[j])
-                        distances.append(dist)
-                d.mean_distance=mean(distances)      
+            if d.name not in core_domains:  
+                distances=[]
+                if len(d.taxo)==1:
+                    taxo=list(d.taxo)[0]
+                    d.upper_node=self.ete3_tree.search_nodes(name=taxo.taxid)[0]
+                    d.mean_distance=0
+                else:
+                    list_taxids=list(set([t.taxid for t in d.taxo]))
+                    domain_tree=ncbi.get_topology(list_taxids)
+                    traverse_generator=domain_tree.traverse()
+                    d.upper_node=next(traverse_generator)   
+                    for i in range(len(list_taxids)):
+                        for j in range(i+1,len(list_taxids)):
+                            dist=self.ete3_tree.get_distance(list_taxids[i],list_taxids[j])
+                            distances.append(dist)
+                    d.mean_distance=mean(distances)    
 
     def create_domain_graph(self,core_domains):
 
