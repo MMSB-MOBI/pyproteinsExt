@@ -427,10 +427,10 @@ class HMMObj():
         self.overlapped_hits=[]
 
     def is_overlapping(self,other_hit,accept_overlap_size):
-        start1=int(self.hit.envFrom)
-        end1=int(self.hit.envTo)
-        start2=int(other_hit.hit.envFrom)
-        end2=int(other_hit.hit.envTo)
+        start1=self.hit.get_start()
+        end1=self.hit.get_end()
+        start2=other_hit.get_start()
+        end2=other_hit.get_end()
         residues1=set([i for i in range(start1,end1+1)])
         residues2=set([i for i in range(start2,end2+1)])
         if len(residues1.intersection(residues2))>accept_overlap_size:
@@ -439,3 +439,11 @@ class HMMObj():
 
     def reinitialize_overlapped_hits(self):
         self.overlapped_hits=[]     
+    def get_sequence(self):
+        return self.hit.aliStringLetters.replace("-","").upper()
+
+    def get_start(self):
+        return int(self.hit.aliFrom)
+
+    def get_end(self):
+        return int(self.hit.aliTo)        
