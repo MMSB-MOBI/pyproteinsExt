@@ -285,6 +285,17 @@ class Topology():
                 taxrank=taxrank_dic[int(taxid)]
         self.taxo=Taxo(taxid,taxname,taxrank)  
 
+    def get_annotated_domains_fragments(self):
+        annotated_domains_fragments=[]
+        for hit in self.hmmr: 
+            dic_core_domains={}
+            if hit.domain in dic_core_domains: 
+                raise Exception("Several hits for domain. Handle this part")
+            dic_core_domains={'name':hit.domain,'seq':hit.get_sequence(),'start':hit.get_start(),'end':hit.get_end()}
+            annotated_domains_fragments.append(dic_core_domains)       
+        annotated_domains_fragments.sort(key=lambda r:r["start"])
+        self.annotated_domains_fragments=annotated_domains_fragments
+        return annotated_domains_fragments
 class Domain(): 
     def __init__(self,name,hits,proteins,taxo):
         self.name=name
