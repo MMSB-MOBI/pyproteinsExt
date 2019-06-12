@@ -264,6 +264,13 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
 
         return g
                         
+    def separate_seq_into_fragments(self):        
+        for e in self: 
+            e.get_annotated_domains_fragments()
+            e.get_Nter_UR_fragment()
+            e.get_Cter_UR_fragment()
+            e.get_helix_fragments()
+            e.get_loop_fragments()
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
