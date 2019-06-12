@@ -43,3 +43,6 @@ class Fasta():
         self.prot=prot 
         self.seq=seq
         self.header=header     
+
+    def get_subsequence(self,start,end):
+        return self.seq[start-1:end]    
