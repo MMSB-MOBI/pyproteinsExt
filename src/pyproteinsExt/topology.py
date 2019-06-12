@@ -296,6 +296,68 @@ class Topology():
         annotated_domains_fragments.sort(key=lambda r:r["start"])
         self.annotated_domains_fragments=annotated_domains_fragments
         return annotated_domains_fragments
+
+    def get_Nter_UR_fragment(self):
+        dic={'name':'N-ter_UR','start':1}
+        Nter=self.tmhmm.fragments[0]
+        #print(self.annotated_domains_fragments[0]["start"])
+        if Nter.end > self.annotated_domains_fragments[0]["start"]: 
+            dic["end"]=self.annotated_domains_fragments[0]["start"]
+        else: 
+            dic["end"]=Nter.end
+        dic["seq"]=self.fasta.get_subsequence(dic["start"],dic["end"])  
+        self.Nter_UR_fragment=dic
+        #return dic       
+
+    def get_Cter_UR_fragment(self):
+        dic={'name':"C-ter_UR"} 
+        Cter=self.tmhmm.fragments[-1]
+        dic["end"]=Cter.end 
+        if Cter.start < self.annotated_domains_fragments[-1]["end"] :
+            dic["start"]=self.annotated_domains_fragments[-1]["end"]
+        else: 
+            dic["start"]=Cter.start
+        dic["seq"]=self.fasta.get_subsequence(dic["start"],dic["end"])  
+        self.Cter_UR_fragment=dic
+        #return dic
+
+    def get_helix_fragments(self):
+        list_fragments=[]
+        helixes=[f for f in self.tmhmm.fragments if f.cellular_location=="TMhelix"]
+        helix_number=1
+        for h in helixes: 
+            dic={'name':"TMhelix_"+str(helix_number),'start':h.start,'end':h.end}
+            helix_number+=1
+            dic["seq"]=self.fasta.get_subsequence(dic["start"],dic["end"])
+            list_fragments.append(dic)
+        self.helix_fragments=list_fragments
+        #return list_fragments
+
+    def get_loop_fragments(self):
+        list_fragments=[]
+        loops=[f for f in self.tmhmm.fragments[1:-1] if f.cellular_location!="TMhelix"]
+        count_inside=0
+        count_outside=0
+        for l in loops: 
+            dic={}
+            if l.cellular_location=="inside":
+                count_inside+=1
+                dic["name"]="inside_loop_"+str(count_inside)
+                dic["start"]=l.start
+                dic["end"]=l.end
+            elif l.cellular_location=="outside":
+                count_outside+=1
+                dic["name"]="outside_loop_"+str(count_outside)
+                dic["start"]=l.start
+                dic["end"]=l.end    
+            dic["seq"]=self.fasta.get_subsequence(dic["start"],dic["end"])    
+            list_fragments.append(dic)
+        self.loop_fragments=list_fragments    
+        #return list_fragments            
+
+
+
+
 class Domain(): 
     def __init__(self,name,hits,proteins,taxo):
         self.name=name
