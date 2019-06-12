@@ -271,6 +271,11 @@ class Topology():
         self.tmhmm=tmhmm
         self.fasta=fasta
         self.taxo=taxo
+        self.annotated_domains_fragments=[]
+        self.Nter_UR_fragment={}
+        self.Cter_UR_fragment={}
+        self.helix_fragments=[]
+        self.loop_fragments=[]
 
     def get_taxo(self,function_get_taxid):
         ncbi=NCBITaxa()
