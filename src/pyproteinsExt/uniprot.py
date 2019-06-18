@@ -152,12 +152,14 @@ class Entry(pyproteins.container.Core.Container):
         self.parseAC()
         if PfamCache:
             self.parseDomain()
+        self.parseDomain()     
         self.parseSse()
         self.parseSequence()
         self.parsePDB()
         self.parseMIM()
         self.parseDI()
         self.parseORPHA()
+        self.searchGenome()
 
     def __hash__(self):
         return hash(self.id)
@@ -230,21 +232,26 @@ class Entry(pyproteins.container.Core.Container):
             self.pdbRef.append(PDBref(e))
 
     def parseDomain(self):
-        self.domains = []
-        for e in self.xmlHandler.find_all("feature", type="domain"):
-            buf = Domain(e, self.id)
-            if buf.description:
-                self.domains.append(Domain(e, self.id))
-        for e in self.xmlHandler.find_all("feature", type="repeat"):
-            buf = Domain(e, self.id)
-            if buf.description:
-                self.domains.append(Domain(e, self.id))
-        if not self.domains:
+        try: 
+            self.domains=getPfamCollection().map(uniprotID=self.id)
+        except: 
+            self.domains=[]
+
+        #self.domains = []
+        #for e in self.xmlHandler.find_all("feature", type="domain"):
+        #    buf = Domain(e, self.id)
+        #    if buf.description:
+        #        self.domains.append(Domain(e, self.id))
+        #for e in self.xmlHandler.find_all("feature", type="repeat"):
+        #    buf = Domain(e, self.id)
+        #    if buf.description:
+        #        self.domains.append(Domain(e, self.id))
+        #if not self.domains:
         #    print "No domain data found for " + self.id + ", attempting pfam"
-            try :
-                self.domains = getPfamCollection().map(uniprotID=self.id)
-            except ValueError as msg:
-                print ("Could not bind uniprot to its pfam ressources reason\n" + str(msg))
+        #    try :
+        #        self.domains = getPfamCollection().map(uniprotID=self.id)
+        #    except ValueError as msg:
+        #        print ("Could not bind uniprot to its pfam ressources reason\n" + str(msg))
 
     def parseSse(self):
         self.sse = []
@@ -262,6 +269,10 @@ class Entry(pyproteins.container.Core.Container):
     def parseSequence(self):
         self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
     #    pass
+
+    def searchGenome(self): 
+        #Try EMBL
+        self.Genome=Genome(self.xmlHandler)
 
 
     @property
@@ -543,4 +554,28 @@ class UniprotKW():
         self.term = e.text
     def __repr__(self):
         return self.id + ":" + self.term
+
+class Genome():
+    def __init__(self,xmlHandler):
+        self.searchEMBL(xmlHandler)
+        self.searchRefSeq(xmlHandler)        
+
+    def searchEMBL(self,xmlHandler):
+        self.EMBLRef=[]
+        self.EMBLProteinRef=[]
+        for e in xmlHandler.find_all("dbReference", type="EMBL"):
+            if str(e.parent.name) == 'entry':
+                self.EMBLRef.append(e['id'])
+                for e_prot_id in e.find_all('property',type='protein sequence ID'):
+                    self.EMBLProteinRef.append(e_prot_id['value'])
+    
+    def searchRefSeq(self,xmlHandler):
+        self.RefSeqRef=[]
+        self.RefSeqProteinRef=[]
+        for e in xmlHandler.find_all("dbReference", type="RefSeq"):
+            if str(e.parent.name) == 'entry':
+                self.RefSeqProteinRef.append(e['id'])
+                for e_prot_id in e.find_all('property',type='nucleotide sequence ID'):
+                    self.RefSeqRef.append(e_prot_id['value'])
+
 

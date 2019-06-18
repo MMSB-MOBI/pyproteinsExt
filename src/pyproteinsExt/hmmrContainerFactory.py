@@ -30,38 +30,39 @@ reStrandsLine = re.compile("^([\s]*([\S]+)[\s]+([\d]+)[\s])([\S]+)[\s]([\d]+)[\s
 
 #reInstance = re.compile('(# hmmsearch.+?(?=\[ok\])\[ok\])', re.DOTALL)
 
-def parse(inputFile=None):
+def parse(*inputFiles):
     upType = None
     bigBuffer = ''
-    if inputFile:
-        fnOpen = open
-        t = 'r'
-        if inputFile.endswith('gz'):  
-            fnOpen = gzip.open
-            t = 'rt'
-  
-        try:
-            f = fnOpen(inputFile, t)
-        except IOError:
-            print ("Could not read file:", inputFile)
-            return Container()
-        
-        with f:
-            for l in f:
-                bigBuffer += l
+    mainContainer = Container()
+    for inputFile in inputFiles: 
+        if inputFile:
+            fnOpen = open
+            t = 'r'
+            if inputFile.endswith('gz'):  
+                fnOpen = gzip.open
+                t = 'rt'
+    
+            try:
+                f = fnOpen(inputFile, t)
+            except IOError:
+                print ("Could not read file:", inputFile)
+                return Container()
+            
+            with f:
+                for l in f:
+                    bigBuffer += l
+                    
+                    #print(l)
+
+                runReports = reInstance.findall(bigBuffer)
+                #print(runReports)
+                if not runReports:
+                    raise ValueError("Could not parse upper level in provided hmm(scan/search) file")
                 
-                #print(l)
+                for d in runReports:  
+                    mainContainer.addParsing(Container(input=io.StringIO(d[0]), upType=d[1]))           
+    return mainContainer
 
-            runReports = reInstance.findall(bigBuffer)
-            if not runReports:
-                raise ValueError("Could not parse upper level in provided hmm(scan/search) file")
-            
-
-            mainContainer = Container()
-            
-            for d in runReports:           
-                mainContainer += Container(input=io.StringIO(d[0]), upType=d[1])
-            return mainContainer
 
 class Container(object):
     def __init__(self, input=None, upType=None):
@@ -69,14 +70,15 @@ class Container(object):
        # self.targetSequenceDatabase=None   #./Trembl_50.fasta
        # self.query=None                    #PF08022_full  [M=104]
         self.upType = upType
-        self._transpose = None
         if not input:
-            self.summary = []
-            self.details = []
+            self.dIndex={}
+            self.pIndex={}
+            self.hmmrEntries=set()
         else:
-            self.summary, self.details = _parseBuffer(input)
+            self.dIndex,self.pIndex,self.hmmrEntries = _parseBuffer(input)
+            
 
-    def __add__(self, other):
+    def addParsing(self, other):
         if self.upType != other.upType:
             if self.upType == None:
                 self.upType = other.upType
@@ -85,37 +87,57 @@ class Container(object):
         if self.upType != other.upType:
             raise TypeError('Adding', self.upType,' and ', other.upType)
 
-        self.summary.extend(other.summary)
-        self.details.extend(other.details)
+        #self.summary.extend(other.summary)
+        #self.details.extend(other.details)
+        self.updateParsing(other)
         return self
 
-    def __len__(self):
-        return len(self.details)
+    def updateParsing(self,other):
+        for d in other.dIndex: 
+            if d not in self.dIndex: 
+                self.dIndex[d]=set()
+            self.dIndex[d].update(other.dIndex[d])    
 
-# returns a list of proteins referencing HMM hits
-    def T(self):
-        if not self._transpose:
-            t = {}
-            for d in self.details:
-                if not d.aliShortID:
-                    continue
-                if d.aliShortID not in t:
-                    t[d.aliShortID] = {}
-                if d.hmmID in t[d.aliShortID]:
-                    print('Warning(' + d.aliShortID + '), multiple hit w/ identical HMM query on a single protein')
-                else :
-                    t[d.aliShortID][d.hmmID] = []
-        
-                t[d.aliShortID][d.hmmID].append(d)    
-            self._transpose = t
-        
-        return self._transpose
-        
+        for p in other.pIndex:
+            if p not in self.pIndex:
+                self.pIndex[p]=set()
+            self.pIndex[p].update(other.pIndex[p])        
 
+        self.hmmrEntries.update(other.hmmrEntries)    
+
+    def addIndex(self,dic,index,match):
+        if index not in dic: 
+            dic[index]=set()
+        dic[index].add(match)    
+
+    def __iter__(self): 
+        '''Iter through matches'''
+        for d in self.dIndex: 
+            for m in self.dIndex[d]: 
+                yield m  
+
+    def add(self,*matches):
+        for match in matches: 
+            prot_id=match.aliShortID
+            dom_id=set([hit.hmmID for hit in match.data])     
+            if len(dom_id)>1:
+                raise Exception("dom_id can't have length > 1. Check your code.")   
+            dom_id=dom_id.pop()
+            self.addIndex(self.pIndex,prot_id,match)
+            self.addIndex(self.dIndex,dom_id,match)
+
+    def filterProteins(self,fPredicat,**kwargs):
+        new_container=Container()
+        for protein in self.pIndex: 
+            matches=self.pIndex[protein]
+            if fPredicat(matches,**kwargs):
+                new_container.add(*matches)
+        return new_container        
 
 def _parseBuffer(input):
-    summary = []
-    details = []
+    dIndex={}
+    pIndex={}
+    hmmrEntries=set()
     inclusionBool = True
     readBool = False
     detailBool = False
@@ -138,20 +160,8 @@ def _parseBuffer(input):
 
         if re.search('\-\-\- full sequence \-\-\-   \-\-\- best 1 domain \-\-\-    \-#dom\-', l):
             #print ("UP")
-            summaryBool = True
             inclusionBool = True
             continue
-
-        if summaryBool and reEmpty.match(l):
-            #print ("LOW")
-            summaryBool = False
-            continue
-
-        #    print("?")
-        #    if l.starstwith('Domain annotation for each model'):         
-        #        print("NN")  
-        #        summaryBool = False
-        #        continue
 
         if reDetail.search(l):
             readBool = False
@@ -169,37 +179,6 @@ def _parseBuffer(input):
         else:
             emptyLinesInRow = 0
 
-
-        #if readBool:
-            #buf = l.split("    ")
-            #if len(buf) == 10:
-            #print(str(len(buf))+ ':: ' + str(buf))
-
-        if summaryBool:
-            if reInclude.search(l):
-                inclusionBool = False
-            #print("Summary parsing attempt")
-            m = reSum.search(l)        
-            if m:
-                scores = m.group(1).split()
-                summary.append({
-                    'fullSequence' : {
-                        'E-value'    : scores[0],
-                        'score'      : scores[1],
-                        'bias'       : scores[2]
-                    },
-                    'bestOneDomain' : {
-                        'E-value'    : scores[3],
-                        'score'      : scores[4],
-                        'bias'       : scores[5]
-                    },
-                    'exp'        : scores[6],
-                    'N'          : m.group(3),
-                    'Model'   : m.group(4),
-                    'Description': m.group(5),
-                    'included'   : inclusionBool
-                })
-                    #print (summary[-1])
         if detailBool:
             if l.startswith(">>"):
                 detailBuffer.append(l)
@@ -214,8 +193,27 @@ def _parseBuffer(input):
     if not queryID:
         raise ValueError('Could not find query identifier in header')
     #print(detailBuffer)
-    details = [ Match(rawData, queryID) for rawData in detailBuffer ]
-    return (summary, details)
+    dIndex[queryID]=set()
+    for rawData in detailBuffer: 
+        #print(rawData)
+        match=Match(rawData,queryID)
+        subjctID=match.aliShortID
+        if not subjctID:
+            continue    
+        if subjctID not in pIndex:
+            pIndex[subjctID]=set()
+        pIndex[subjctID].add(match) 
+        dIndex[queryID].add(match)  
+        #print(match.data) 
+        if match.data:
+            for hit in match.data:
+                domain=hit.hmmID
+                prot=hit.aliID
+                hmmrEntries.add(HMMObj(prot,domain,hit))
+        else: 
+            hmmrEntries.add(HMMObj(subjctID,None,None))        
+    #details = [ Match(rawData, queryID) for rawData in detailBuffer ]
+    return (dIndex,pIndex,hmmrEntries)
 
 class Match (object):
     def __init__(self, bufferString, queryID):
@@ -225,14 +223,16 @@ class Match (object):
         self.queryID = queryID
         self.parseDetailEntry(bufferString)
         
-    def __hash__(self):
-        return hash(self.aliLongID + self.hmmID)
+    #def __hash__(self):
+    #    return hash(self.aliLongID + self.hmmID)
 
     def parseDetailEntry(self, bufferString):
         buff = bufferString.split('  == domain ')
         self.data = []
         if len(buff) == 1:
             print ("Warning:: " + buff[0])
+            self.aliLongID=buff[0].split("\n")[0].lstrip(">> ")
+            self.aliShortID=self.aliLongID.split(" ")[0]
             self.data =[]
             return
 
@@ -418,3 +418,32 @@ def plumbParse(buffer, index, mainStringAccumulator, stuffContainer, reSymbolStu
         index += -1 if goingUp else 1
        # print ("-->", index)
     return mainStringAccumulator, stuffContainer
+
+class HMMObj():
+    def __init__(self,prot,domain,hit): 
+        self.prot=prot
+        self.domain=domain
+        self.hit=hit   
+        self.overlapped_hits=[]
+
+    def is_overlapping(self,other_hit,accept_overlap_size):
+        start1=self.hit.get_start()
+        end1=self.hit.get_end()
+        start2=other_hit.get_start()
+        end2=other_hit.get_end()
+        residues1=set([i for i in range(start1,end1+1)])
+        residues2=set([i for i in range(start2,end2+1)])
+        if len(residues1.intersection(residues2))>accept_overlap_size:
+            return True
+        return False   
+
+    def reinitialize_overlapped_hits(self):
+        self.overlapped_hits=[]     
+    def get_sequence(self):
+        return self.hit.aliStringLetters.replace("-","").upper()
+
+    def get_start(self):
+        return int(self.hit.aliFrom)
+
+    def get_end(self):
+        return int(self.hit.aliTo)        
