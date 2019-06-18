@@ -120,6 +120,24 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
                 new_e=Topology(e.prot,hit_to_add,e.tmhmm,e.fasta,e.taxo)    
                 new_container.addEntry(new_e)
         return new_container 
+    def filter_last_helix(self,distance=90):
+        new_container=TopologyContainer()
+        c=0
+        for e in self:
+            new_helix_fragments=copy.deepcopy(e.helix_fragments)
+            new_loop_fragments=copy.deepcopy(e.loop_fragments)
+            if len(e.helix_fragments)==7:
+                c+=1
+                new_helix_fragments=new_helix_fragments[:-1]
+                new_loop_fragments=new_loop_fragments[:-1]
+            elif e.helix_fragments[-1]["start"]-e.helix_fragments[-2]["end"]>distance:
+                c+=1
+                new_helix_fragments=new_helix_fragments[:-1]
+                new_loop_fragments=new_loop_fragments[:-1]
+            new_e=Topology(e.prot,e.hmmr,e.tmhmm,e.fasta,e.taxo,e.uniprot_entry,e.annotated_domains_fragments,e.Nter_UR_fragment,e.Cter_UR_fragment,new_helix_fragments,new_loop_fragments,e.unknown1_fragment,e.unknown2_fragment)        
+            new_container.addEntry(new_e)
+        print(c,"proteins have been filtered")    
+        return new_container    
     def compute_overlapped_domains(self,overlap_accept_size):
         self.reinitialize_overlapped_domains()
         for e in self: 
