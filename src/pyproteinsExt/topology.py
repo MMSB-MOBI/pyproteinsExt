@@ -8,6 +8,11 @@ from ete3 import NCBITaxa
 from ete3 import Tree
 from statistics import mean
 from igraph import Graph
+from colour import Color
+import pyproteinsExt.refseq as refseq
+from os.path import expanduser
+import pyproteinsExt.uniprot as uniprot
+import copy 
 
 def check_if_same_proteins(dic_container):
     hmmr_proteins=set()
@@ -271,6 +276,26 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
             e.get_Cter_UR_fragment()
             e.get_helix_fragments()
             e.get_loop_fragments()
+    def get_unknown_fragments(self):
+        for e in self : 
+            e.get_unknown1_fragment()
+            e.get_unknown2_fragment()        
+                        
+class Topology(): 
+    def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None,uniprot_entry=None,annotated_domains_fragments=None,Nter_UR_fragment=None,Cter_UR_fragment=None,helix_fragments=None,loop_fragments=None,unknown1_fragment=None,unknown2_fragment=None):
+        self.prot=prot
+        self.hmmr=hmmr
+        self.tmhmm=tmhmm
+        self.fasta=fasta
+        self.taxo=taxo
+        self.uniprot_entry=uniprot_entry
+        self.annotated_domains_fragments=annotated_domains_fragments
+        self.Nter_UR_fragment=Nter_UR_fragment
+        self.Cter_UR_fragment=Cter_UR_fragment
+        self.helix_fragments=helix_fragments
+        self.loop_fragments=loop_fragments
+        self.unknown1_fragment=unknown1_fragment
+        self.unknown2_fragment=unknown2_fragment
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
         self.prot=prot
@@ -332,6 +357,29 @@ class Topology():
         dic["seq"]=self.fasta.get_subsequence(dic["start"],dic["end"])  
         self.Cter_UR_fragment=dic
         #return dic
+
+    def get_unknown1_fragment(self):
+        dic={'name':"Unknown1"}
+        start=self.helix_fragments[-1]["end"]+1
+        end=[d for d in self.annotated_domains_fragments if d["name"]=="fad_binding_prokaryotes"][0]["start"]-1
+        if end < start:
+            self.unknown1_fragment=[]
+        else:     
+            seq=self.fasta.get_subsequence(start,end)
+            dic["start"]=start
+            dic["end"]=end
+            dic["seq"]=seq
+            self.unknown1_fragment=[dic]
+
+    def get_unknown2_fragment(self):
+        dic={"name":'Unknown2'}
+        start=[d for d in self.annotated_domains_fragments if d["name"]=="fad_binding_prokaryotes"][0]["end"]+1
+        end=[d for d in self.annotated_domains_fragments if d["name"]=="nad_binding_prokaryotes"][0]["start"]-1
+        seq=self.fasta.get_subsequence(start,end)
+        dic["start"]=start
+        dic["end"]=end
+        dic["seq"]=seq
+        self.unknown2_fragment=[dic]
 
     def get_helix_fragments(self):
         list_fragments=[]
