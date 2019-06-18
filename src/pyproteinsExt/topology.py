@@ -117,9 +117,10 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
                     add=True
                     hit_to_add.append(hit)
             if add :     
-                new_e=Topology(e.prot,hit_to_add,e.tmhmm,e.fasta,e.taxo)    
+                new_e=Topology(e.prot,hit_to_add,e.tmhmm,e.fasta,e.taxo,e.uniprot_entry,e.annotated_domains_fragments,e.Nter_UR_fragment,e.Cter_UR_fragment,e.helix_fragments,e.loop_fragments,e.unknown1_fragment,e.unknown2_fragment)    
                 new_container.addEntry(new_e)
         return new_container 
+
     def filter_last_helix(self,distance=90):
         new_container=TopologyContainer()
         c=0
@@ -314,18 +315,6 @@ class Topology():
         self.loop_fragments=loop_fragments
         self.unknown1_fragment=unknown1_fragment
         self.unknown2_fragment=unknown2_fragment
-class Topology(): 
-    def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None):
-        self.prot=prot
-        self.hmmr=hmmr
-        self.tmhmm=tmhmm
-        self.fasta=fasta
-        self.taxo=taxo
-        self.annotated_domains_fragments=[]
-        self.Nter_UR_fragment={}
-        self.Cter_UR_fragment={}
-        self.helix_fragments=[]
-        self.loop_fragments=[]
 
     def get_taxo(self,function_get_taxid):
         ncbi=NCBITaxa()
