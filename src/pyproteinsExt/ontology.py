@@ -162,6 +162,12 @@ class Ontology():
                     return e
             return None
 
+        def generateUntilSeed(predicate, iterable):
+            for e in iterable:
+                yield e
+                if predicate(e):
+                    break
+
         nodes = self.harvest(root_id)
 
         tree = Tree()
@@ -181,7 +187,10 @@ class Ontology():
 
                 # print("Inserting", c_id, c_label)
                 lineage = map(lambda x: (x.id[0], x.label[0]) if x.name != 'Thing' else ("__root__", None), self._getLineage(c_id))
-                lineage = list(filter(lambda x: x[0] != '__root__', lineage))
+                # lineage = list(filter(lambda x: x[0] != '__root__', lineage))
+
+                # Filtre lineage jusqu'à trouver le root. Arrête ensuite
+                lineage = list(generateUntilSeed(lambda x: x[0] == root_id, lineage))
 
                 if not find(lambda x: x[0] == root_id, lineage):
                     continue
