@@ -25,7 +25,7 @@ class Ontology():
         if file:
             self.onto = get_ontology("file://" + file).load()
 
-# find terms based on namespaced Id or text description in label
+    # find terms based on namespaced Id or text description in label
     def find(self, stringTerm):
         if isOboNamespaced(stringTerm):
             return self.onto.search(id=stringTerm)
@@ -36,7 +36,7 @@ class Ontology():
             return self.onto.search_one(id=stringTerm)
         return self.onto.search_one(label=stringTerm)
 
- # if term is a/list of string coherce it into matching ontology classes
+    # if term is a/list of string coherce it into matching ontology classes
     def _coherceIntoMany(self, data):
         if not isinstance(data, list):
             data = [data]
@@ -45,8 +45,8 @@ class Ontology():
             res += self.find(e)
         return list(set(res))
 
-# Given a list of term of termlike, (including regexp)
-# Get the non redundant list of terms that match the supplied argument and all their sons
+    # Given a list of term of termlike, (including regexp)
+    # Get the non redundant list of terms that match the supplied argument and all their sons
 
     def harvest(self, termLikeList):
 
@@ -105,9 +105,9 @@ class Ontology():
 
 
 
-# Find and Count foreach provided term in
-# the correesponding parents in range domain the number
-# Not tested w/ owlReady !!!
+    # Find and Count foreach provided term in
+    # the correesponding parents in range domain the number
+    # Not tested w/ owlReady !!!
     def project(self, domainTerms, rangeTerms, flatDic=False):
 
         domainTerms = self._coherce(domainTerms)
@@ -152,3 +152,202 @@ class Ontology():
 
         return termLike
 
+    """
+    Construct a Tree instance from root_id node (id=root_id)
+    """
+    def constructTreeFromRoot(self, root_id):
+        def find(predicate, iterable):
+            for e in iterable:
+                if predicate(e):
+                    return e
+            return None
+
+        nodes = self.harvest(root_id)
+
+        tree = Tree()
+        
+        rootnode = self.onto.search_one(id=root_id)
+
+        if not rootnode:
+            raise IndexError("Seed does not exists")
+
+        tree.root = Node(rootnode.id[0], rootnode.label[0])
+
+        for c in nodes:
+            # print(c, c.id, c.label)
+            try:
+                c_id = c.id[0]
+                c_label = c.label[0]
+
+                # print("Inserting", c_id, c_label)
+                lineage = map(lambda x: (x.id[0], x.label[0]) if x.name != 'Thing' else ("__root__", None), self._getLineage(c_id))
+                lineage = list(filter(lambda x: x[0] != '__root__', lineage))
+
+                if not find(lambda x: x[0] == root_id, lineage):
+                    continue
+
+                tree.append(lineage, c_id, c_label)
+            except IndexError:
+                pass
+
+        return tree
+
+# Needed for create tree for Ontology.constructTreeFromRoot()
+class Tree:
+    def __init__(self):
+        self.root = None
+        self.node_dict = {}
+
+    def toDict(self):
+        return {
+            self.root.id: self.root.toDict()
+        }
+
+    def append(self, parents, current_id, current_label):
+        # Si le noeud existe déjà
+        if self.findInTree(current_id):
+            return
+
+        i = 0
+        for p in parents:
+            parent_id = p[0]
+            parent_l = p[1]
+
+            if self.findInTree(parent_id):
+                break
+
+            self.append(parents[i+1:], parent_id, parent_l)
+
+            i += 1
+
+        new_node = Node(current_id, current_label)
+
+        if len(parents) == 0:
+            self.root.parent = new_node
+            new_node.addChild(self.root)
+            self.root = new_node
+        else:
+            parent = self.findInTree(parents[0][0])
+            # print("parent", parents, parents[0][0], parent, self.root.children)
+            new_node.parent = parent
+            parent.addChild(new_node)
+
+        self.node_dict[new_node.id] = new_node
+
+
+    def findInTree(self, id: str):
+        if self.root is None:
+            return None
+
+        if id in self.node_dict:
+            return self.node_dict[id]
+
+        return self.root if self.root.id == id else self.root.findInNode(id)
+
+    def clone(self, deep = True):
+        new_tree = Tree()
+        new_tree.root = self.root.clone(deep = deep)
+
+        return new_tree
+
+    def prune(self, seeds: list):
+        new_tree = self.clone()
+        
+        # Prune new tree with specific seeds
+        okay = new_tree.root.prune(set(seeds))
+
+        if not okay:
+            raise IndexError("Cant find any node matching given seeds")
+
+        return new_tree
+
+    def toEte3(self):
+        return self.root.toEte3()
+
+
+class Node:
+    def __init__(self, id, label, parent = None):
+        self.parent = parent
+        self.id = id
+        self.label = label
+        self.children = {}
+
+    def addChild(self, child):
+        if not isinstance(child, Node):
+            raise TypeError('Must be Node type')
+
+        child.parent = self
+        self.children[child.id] = child
+
+    def removeChild(self, id):
+        del self.children[id]
+
+    def childExists(self, id):
+        return id in self.children
+
+    def childrens(self):
+        return self.children.values()
+
+    def isLeaf(self):
+        return self.children.__len__() == 0
+
+    def toDict(self):
+        return {
+            'name': self.label,
+            'children': { x.id: x.toDict() for x in self.childrens() }
+        }
+
+    def findInNode(self, id: str):
+        if id in self.children:
+            return self.children[id]
+
+        for c in self.childrens():
+            n = c.findInNode(id)
+
+            if n:
+                return n
+
+        return None
+    
+    # Need to import ete3 and give TreeNode to this func
+    def toEte3(self, TreeNode):
+        node = TreeNode(name=self.id)
+        node.add_feature("label", self.label)
+
+        for c in self.childrens():
+            node.add_child(c.toEte3()) 
+
+        return node
+
+    def clone(self, deep = True):
+        cur = Node(self.id, self.label)
+
+        if deep:
+            for c in self.childrens():
+                child_clone = c.clone(deep=deep)
+                cur.addChild(child_clone)
+
+        return cur
+
+    # seeds is an iterable, ideally a set
+    def prune(self, seeds):
+        one_node_is_okay = False
+
+        children_to_remove = []
+
+        for e in self.children:
+            okay = self.children[e].prune(seeds)
+
+            if not okay:
+                children_to_remove.append(e)
+            else:
+                one_node_is_okay = True
+
+        for c in children_to_remove:
+            self.removeChild(c)
+
+        if not one_node_is_okay:
+            one_node_is_okay = self.id in seeds
+
+        return one_node_is_okay
+  
