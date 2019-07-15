@@ -447,10 +447,68 @@ class Topology():
             raise Exception("No EMBL genome xref. Handle this.")    
         ena_id = self.uniprot_xref["EMBL"]["genome"][0]  # For now, take first id
         return enaColl.get(ena_id, **kwargs)
-        
+
     def set_all_genome_features(self, enaColl, **kwargs):
         self.genome_ena_entry = self.get_genome_features(enaColl, type="all_genome", **kwargs)
 
+    def set_neighborhood(self, number_neighbors, enaColl):
+        def filter_CDS(feature):
+            if feature.type == "CDS":
+                return True 
+            return False
+
+        def filter_ena_by_id(feature, **kwargs):
+            list_feature = kwargs.get("list_feature",None)
+            if not list_feature: 
+                raise Exception("Give list_feature option to filter_ena_by_id()")
+            if feature in list_feature:
+                return True 
+            return False    
+
+        # Check if required attributes exists
+        if not hasattr(self, "uniprot_xref"):
+            raise Exception("Search uniprot xref first. set_uniprot_xref() method.")
+        if not hasattr(self, "genome_ena_entry"):
+            raise Exception("Search all genome ena entry first. set_all_genome_features() method")
+
+        # Filter CDS
+        # print("filter CDS")
+        cds = self.genome_ena_entry.filter(filter_CDS).features
+            
+        # Find protein
+        ena_protein_ref = self.uniprot_xref["EMBL"]["protein"][0]
+        protein_feature = [f for f in cds if ena_protein_ref in f.info.get("protein_id",[])]
+        if not protein_feature: 
+            raise Exception("protein not found.")
+        if len(protein_feature) > 1: 
+            raise Exception("More than 1 protein with id has been found. Handle this")
+        protein_feature = protein_feature[0]
+        protein_index = cds.index(protein_feature)
+
+        # Get neighborhood
+        try:
+            neighborhood = cds[protein_index-number_neighbors:protein_index+number_neighbors+1]
+        except IndexError:
+            raise Exception("Index error : neighborhood too small. Handle this.")
+
+        # Correct neighborhood if not in same_contig and delete anchor protein
+        neighborhood = [n for n in neighborhood if n.source == protein_feature.source]
+        neighborhood.remove(protein_feature)
+
+        # Create filters for relaunch genome feature getting
+        locus_tags = []
+        for n in neighborhood: 
+            if not n.info.get("locus_tag"):
+                raise Exception("locus_tag doesn't exist for", n, ". Handle this.")
+            locus_tags += n.info["locus_tag"]
+        filter_info = {'locus_tag': locus_tags}
+
+        # Get genome features again, just keep neighbors and this time keep their sequences. 
+        # print("NEIGHBORHOOD FEATURES")
+        self.set_neighborhood_features(enaColl, info_filter=filter_info, keep_sequence=True, type_filter=["CDS"])
+
+    def set_neighborhood_features(self, enaColl, **kwargs):
+        self.neighborhood_ena_entry = self.get_genome_features(enaColl, type="neighbors", **kwargs)    
 
 class Domain(): 
     def __init__(self,name,hits,proteins,taxo):
