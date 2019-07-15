@@ -31,10 +31,14 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         super().serialize(ext=ext)
 
 class Entry(pyproteins.container.Core.Container):
-    def __init__(self, id, baseUrl="https://www.ebi.ac.uk/ena/data/view/", fileName=None, ext="&display.txt", charge_empty=False, rerun=False, **kwargs):
+    def __init__(self, id, baseUrl="https://www.ebi.ac.uk/ena/data/view/", fileName=None, ext="&display.txt", charge_empty=False, rerun=False, url_id=None, **kwargs):
         if not id:
             raise TypeError('identifier is empty')
-        super().__init__(id, url=baseUrl + str(id) + ext, fileName=fileName)
+        if url_id: 
+            url = baseUrl + str(url_id) + ext
+        else: 
+            url = baseUrl + str(id) + ext
+        super().__init__(id, url=url, fileName=fileName)
         self.rerun = rerun
         self.type = type
         if charge_empty:
@@ -44,13 +48,12 @@ class Entry(pyproteins.container.Core.Container):
 
             # Search assembly embl set if there is no features in classical url
             if len(self.features) <= 1 and not rerun:
-                # print("NEW URL")
                 short_id = id[:6]
                 first_letters = id[:2].lower()
                 new_base_url = "http://ftp.ebi.ac.uk/pub/databases/ena/wgs/public/"+first_letters+"/"
                 ext = ".dat.gz"
                 fileName = None
-                self.__init__(self.id, new_base_url, fileName, ext, rerun=True, **kwargs)
+                self.__init__(self.id, new_base_url, fileName, ext, rerun=True, url_id=short_id, **kwargs)
      
     def embl_parsing_features(self, rawData, **kwargs):
         def conserve_feature(feature, type_filter, info_filter):
