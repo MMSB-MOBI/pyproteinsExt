@@ -436,6 +436,21 @@ class Topology():
                 raise Exception()
             self.uniprot_xref = None
 
+    def get_genome_features(self, enaColl, **kwargs):
+        # print("GET GENOME FEATURES")
+        # print(kwargs)
+        if not self.uniprot_xref:
+            raise Exception("Get uniprot xref first.")
+        if not self.uniprot_xref.get("EMBL"):
+            raise Exception("No EMBL xref. Handle this.")
+        if not self.uniprot_xref["EMBL"].get("genome"):
+            raise Exception("No EMBL genome xref. Handle this.")    
+        ena_id = self.uniprot_xref["EMBL"]["genome"][0]  # For now, take first id
+        return enaColl.get(ena_id, **kwargs)
+        
+    def set_all_genome_features(self, enaColl, **kwargs):
+        self.genome_ena_entry = self.get_genome_features(enaColl, type="all_genome", **kwargs)
+
 
 class Domain(): 
     def __init__(self,name,hits,proteins,taxo):
