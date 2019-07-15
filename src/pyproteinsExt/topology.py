@@ -67,6 +67,9 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
                 new_container.addEntry(e)
         return new_container        
 
+    def __getitem__(self, index):
+        return list(self.entries.values())[index]
+
     def get_domain_mfasta(self,domain):
         mfasta=''
         for e in self: 
