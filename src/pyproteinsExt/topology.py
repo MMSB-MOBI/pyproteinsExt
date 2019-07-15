@@ -422,7 +422,16 @@ class Topology():
         self.loop_fragments=list_fragments    
         #return list_fragments            
 
-
+    def set_uniprot_xref(self, uColl):
+        p_id = self.prot.split("|")[1]
+        try:
+            uniprot_entry = uColl.get(p_id)
+            self.uniprot_xref = uniprot_entry.xref
+        except ValueError as ve:
+            ve = str(ve)
+            if ve != "Error, empty xmlHandler":
+                raise Exception()
+            self.uniprot_xref = None
 
 
 class Domain(): 

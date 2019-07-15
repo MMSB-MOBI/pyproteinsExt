@@ -159,7 +159,7 @@ class Entry(pyproteins.container.Core.Container):
         self.parseMIM()
         self.parseDI()
         self.parseORPHA()
-        self.searchGenome()
+        self.xref = self.get_xref()
 
     def __hash__(self):
         return hash(self.id)
@@ -270,9 +270,21 @@ class Entry(pyproteins.container.Core.Container):
         self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
     #    pass
 
-    def searchGenome(self): 
-        #Try EMBL
-        self.Genome=Genome(self.xmlHandler)
+    def get_xref(self):
+        dic_xref={'EMBL':{'protein': [], 'genome': []}, 'RefSeq':{'protein': [], 'genome': []}}    
+        # Search EMBL
+        for e in self.xmlHandler.find_all("dbReference", type="EMBL"):
+            if str(e.parent.name) == 'entry':
+                dic_xref["EMBL"]["genome"].append(e["id"])
+                for e_prot_id in e.find_all('property',type='protein sequence ID'):
+                    dic_xref["EMBL"]["protein"].append(e_prot_id["value"])
+        # Search RefSeq
+        for e in self.xmlHandler.find_all("dbReference", type="RefSeq"):
+            if str(e.parent.name) == 'entry':
+                dic_xref["RefSeq"]["protein"].append(e["id"])
+                for e_prot_id in e.find_all('property',type='nucleotide sequence ID'):       
+                    dic_xref["RefSeq"]["genome"].append(e_prot_id["value"])
+        return dic_xref     
 
 
     @property
