@@ -119,13 +119,13 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
 
         super().__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
 
-    def serialize(self, **kwargs):
+    def serialize(self, ext=''):
         global PfamCache
         print ("serializing uniprot collection")
-        super().serialize(kwargs)
+        super().serialize(ext=ext)
         if PfamCache:
             print ("serializing pfam collection")
-            getPfamCollection().serialize(kwargs)
+            getPfamCollection().serialize(ext=ext)
 
 class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fileName=None):
