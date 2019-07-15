@@ -466,9 +466,9 @@ class Topology():
             return False    
 
         # Check if required attributes exists
-        if not hasattr(self, "uniprot_xref"):
+        if not hasattr(self, "uniprot_xref") or not self.uniprot_xref:
             raise Exception("Search uniprot xref first. set_uniprot_xref() method.")
-        if not hasattr(self, "genome_ena_entry"):
+        if not hasattr(self, "genome_ena_entry") or not self.genome_ena_entry:
             raise Exception("Search all genome ena entry first. set_all_genome_features() method")
 
         # Filter CDS
@@ -509,6 +509,9 @@ class Topology():
 
     def set_neighborhood_features(self, enaColl, **kwargs):
         self.neighborhood_ena_entry = self.get_genome_features(enaColl, type="neighbors", **kwargs)    
+
+    def delete_all_genome_features(self):
+        self.genome_ena_entry=None
 
 class Domain(): 
     def __init__(self,name,hits,proteins,taxo):
