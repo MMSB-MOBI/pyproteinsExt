@@ -301,7 +301,7 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
     def get_unknown_fragments(self):
         for e in self : 
             e.get_unknown1_fragment()
-            e.get_unknown2_fragment()        
+            e.get_unknown2_fragment()       
                         
 class Topology(): 
     def __init__(self,prot,hmmr,tmhmm,fasta,taxo=None,uniprot_entry=None,annotated_domains_fragments=None,Nter_UR_fragment=None,Cter_UR_fragment=None,helix_fragments=None,loop_fragments=None,unknown1_fragment=None,unknown2_fragment=None):
@@ -457,13 +457,10 @@ class Topology():
                 return True 
             return False
 
-        def filter_ena_by_id(feature, **kwargs):
-            list_feature = kwargs.get("list_feature",None)
-            if not list_feature: 
-                raise Exception("Give list_feature option to filter_ena_by_id()")
-            if feature in list_feature:
-                return True 
-            return False    
+        def filter_no_pseudogene(feature):
+            if feature.info.get("other_qualifiers") and "pseudo" in feature.info["other_qualifiers"]:
+                return False
+            return True    
 
         # Check if required attributes exists
         if not hasattr(self, "uniprot_xref") or not self.uniprot_xref:
@@ -506,6 +503,9 @@ class Topology():
         # Get genome features again, just keep neighbors and this time keep their sequences. 
         # print("NEIGHBORHOOD FEATURES")
         self.set_neighborhood_features(enaColl, info_filter=filter_info, keep_sequence=True, type_filter=["CDS"])
+
+        # Filter pseudogenes 
+        self.neighborhood_ena_entry = self.neighborhood_ena_entry.filter(filter_no_pseudogene)
 
     def set_neighborhood_features(self, enaColl, **kwargs):
         self.neighborhood_ena_entry = self.get_genome_features(enaColl, type="neighbors", **kwargs)    
