@@ -513,6 +513,19 @@ class Topology():
     def delete_all_genome_features(self):
         self.genome_ena_entry=None
 
+    @property
+    def neighbors_sequences_fasta(self):
+        fasta_str=''
+        if not hasattr(self, "neighborhood_ena_entry"):
+            raise Exception("Compute neighborhood features first")
+        for f in self.neighborhood_ena_entry.features:    
+            if not f.info.get("translation",None):
+                print(f.info)
+                raise Exception("Don't have sequence")
+            fasta_str += ">" + self.prot.split("|")[1] + "_" + f.name + " " + ";".join(f.info.get("protein_id","")) + " " +";".join(f.info.get("product","")) + "\n"    
+            fasta_str += f.info.get("translation",[])[0] + "\n"
+        return fasta_str    
+
 class Domain(): 
     def __init__(self,name,hits,proteins,taxo):
         self.name=name
