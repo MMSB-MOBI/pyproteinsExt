@@ -14,7 +14,7 @@ def getENACollection():
 
 
 def strip(string):
-    subString = re.search(".embl$", string)
+    subString = re.search(".embl$|.embl.gz$", string)
     if subString:
         return string.split(".")[0]
     return None
