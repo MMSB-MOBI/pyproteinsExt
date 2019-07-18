@@ -510,11 +510,16 @@ class Topology():
             raise Exception("Compute neighborhood features first")
         for f in self.neighborhood_ena_entry.features:
             if not f.info.get("translation", None):
-                print(f.info)
                 raise Exception("Don't have sequence")
-            fasta_str += ">" + self.prot.split("|")[1] + "_" + f.name + " " + ";".join(f.info.get("protein_id", "")) + " " + ";".join(f.info.get("product", "")) + "\n"
+            fasta_str += ">" + self.prot + "+" + f.name + "+" + ";".join(f.info.get("protein_id",'')) + " " + ";".join(f.info.get("product", "")) + "\n"
             fasta_str += f.info.get("translation", [])[0] + "\n"
         return fasta_str
+
+    def get_neighborhood_clusters_number(self):
+        if not hasattr(self, "neighborhood_clusters"):
+            raise Exception("Compute neighborhood clusters first. Method add_neighborhood_clusters() from TopologyContainer")    
+
+        return list(self.neighborhood_clusters.values())
 
 
 class Domain():
