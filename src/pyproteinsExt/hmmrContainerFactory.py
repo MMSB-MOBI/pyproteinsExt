@@ -429,11 +429,15 @@ class HMMObj():
 
     def reinitialize_overlapped_hits(self):
         self.overlapped_hits=[]
-    def get_sequence(self):
+
+    @property    
+    def sequence(self):
         return self.hit.aliStringLetters.replace("-","").upper()
 
-    def get_start(self):
+    @property
+    def start(self):
         return int(self.hit.aliFrom)
 
-    def get_end(self):
+    @property
+    def end(self):
         return int(self.hit.aliTo)

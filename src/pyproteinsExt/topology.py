@@ -350,8 +350,8 @@ class Topology():
             dic_core_domains = {}
             if hit.domain in dic_core_domains:
                 raise Exception("Several hits for domain. Handle this part")
-            dic_core_domains = {'name': hit.domain, 'seq': hit.get_sequence(),
-                                'start': hit.get_start(), 'end': hit.get_end()}
+            dic_core_domains = {'name': hit.domain, 'seq': hit.sequence,
+                                'start': hit.start, 'end': hit.end}
             annotated_domains_fragments.append(dic_core_domains)
         annotated_domains_fragments.sort(key=lambda r: r["start"])
         self.annotated_domains_fragments = annotated_domains_fragments
