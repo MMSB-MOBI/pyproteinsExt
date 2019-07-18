@@ -70,9 +70,9 @@ class TMHMM_Obj():
         helix_number = 1
         for f in self.fragments:
             if f.cellular_location == 'inside':
-                letter = "o"
-            elif f.cellular_location == "outside":
                 letter = "i"
+            elif f.cellular_location == "outside":
+                letter = "o"
             elif f.cellular_location == "TMhelix":
                 letter = str(helix_number)
                 helix_number += 1
