@@ -432,7 +432,9 @@ class Topology():
             raise Exception("No EMBL genome xref. Handle this.")
         # For now, take first id
         ena_id = self.uniprot_xref["EMBL"]["genome"][0]
-        return enaColl.get(ena_id, **kwargs)
+        if len(ena_id) != 8: 
+            ena_id = ena_id[:6]  
+        return enaColl.get(ena_id, force_reading_cache=True, **kwargs)
 
     def set_all_genome_features(self, enaColl, **kwargs):
         self.genome_ena_entry = self.get_genome_features(enaColl, type="all_genome", **kwargs)
