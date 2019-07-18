@@ -293,6 +293,51 @@ HQANPGQFAMVWVPGVDEVPMSVLAIHGKSEAGVVIKKGGPVSTALWEKKVGDIFFVRGPYGH
 ...
 ```    
 
+#### TMHMM results container
+
+Container that store TMHMM results. You can only give one tmhmm result file to parse (for now).
+
+```python
+import pyproteinsExt.tmhmmContainer as tmhmm
+tmhmmContainer = tmhmm.parse('tmhmm.out')
+```
+Container is a collection of TMHMM_Obj objects.
+
+**TMHMM_Obj** attributes and properties:
+* prot : protein name
+* prot_length : protein length
+* nb_helix : number of predicted helixes
+* fragments : List of Fragment object. Each fragment have attributes cellular_location, start and end. 
+* topology_seq : protein sequence with 'o' for outside loop, 'i' for inside loop and helix number for helixes. **WARNING : doesn't work if there are more than 9 helixes (use 2 characters instead of 1)**
+
+```python
+for e in tmhmmContainer:
+    print(e.prot)
+    print(e.prot_length)
+    print(e.nb_helix)
+    print(len(e.fragments),"fragments")
+    for f in e.fragments:
+        print(f.cellular_location, f.start, f.end)
+```
+will print 
+```text
+tr|A0A2E0DFV0|A0A2E0DFV0_9EURY
+155
+4
+9 fragments
+outside 1 5
+TMhelix 6 25
+inside 26 53
+TMhelix 54 76
+outside 77 90
+TMhelix 91 109
+inside 110 129
+TMhelix 130 152
+outside 153 155
+...
+```
+
+
 #### Pfam container
 
 ### Protein-Protein interaction containers
