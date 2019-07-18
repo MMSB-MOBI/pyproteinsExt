@@ -428,16 +428,16 @@ class Topology():
             raise Exception("Get uniprot xref first.")
         if not self.uniprot_xref.get("EMBL"):
             raise Exception("No EMBL xref. Handle this.")
-        if not self.uniprot_xref["EMBL"].get("genome"):
-            raise Exception("No EMBL genome xref. Handle this.")
+
         # For now, take first id
-        ena_id = self.uniprot_xref["EMBL"]["genome"][0]
+        ena_id = list(self.uniprot_xref["EMBL"].keys())[0]
         if len(ena_id) != 8: 
-            ena_id = ena_id[:6]  
+            ena_id = ena_id[:6]
         return enaColl.get(ena_id, force_reading_cache=True, **kwargs)
 
     def set_all_genome_features(self, enaColl, **kwargs):
         self.genome_ena_entry = self.get_genome_features(enaColl, type="all_genome", **kwargs)
+        self.genome_ena_id = list(self.uniprot_xref["EMBL"].keys())[0]
 
     def set_neighborhood(self, number_neighbors, enaColl):
         def filter_type(feature, **kwargs):
@@ -464,12 +464,12 @@ class Topology():
         cds = self.genome_ena_entry.filter(filter_type, type="CDS").features
 
         # Find protein
-        ena_protein_ref = self.uniprot_xref["EMBL"]["protein"][0]
+        ena_protein_ref = self.uniprot_xref["EMBL"][self.genome_ena_id]
         protein_feature = [f for f in cds if ena_protein_ref in f.info.get("protein_id", [])]
         if not protein_feature:
-            raise Exception("protein not found.")
+            raise Exception(self.prot, "protein not found in genome")
         if len(protein_feature) > 1:
-            raise Exception("More than 1 protein with id has been found. Handle this")
+            raise Exception(self.prot, "More than 1 protein with id has been found. Handle this")
         protein_feature = protein_feature[0]
         protein_index = cds.index(protein_feature)
 

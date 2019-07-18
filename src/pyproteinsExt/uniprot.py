@@ -26,18 +26,18 @@ import pyproteins.utils.make_json_serializable
 
 ## Returns a list of all keyword in collection, along with the list of uniprotObj featuring them
 def keyWordChart(uniprotObjIter, kwType='GO'):
-    def kwMapper(obj, _type) : 
+    def kwMapper(obj, _type) :
         if _type == 'GO':
             return obj.GO
         raise TypeError("implement other KW plz")
-    
+
     kwChart = {}
     for uniprotObj in uniprotObjIter:
         for kwObj in  kwMapper(uniprotObj, kwType):
             if kwObj not in kwChart:
                 kwChart[kwObj] = []
             kwChart[kwObj].append(uniprotObj)
-    
+
     return sorted([ (k,v) for k,v in kwChart.items() ], key=lambda x : len(x[1]), reverse=True)
 
 # Give link to uniprot Collection to allow proxy settings
@@ -142,7 +142,7 @@ class Entry(pyproteins.container.Core.Container):
         self.xmlHandler = self.getXmlHandler()
         if not self.xmlHandler:
             return None
-        
+
         self.name = self.xmlHandler.find('name').text
         self.fullName = self.xmlHandler.find('fullName').text
         self.geneName = self.xmlHandler.find('gene').find('name').text if self.xmlHandler.find('gene') else None
@@ -150,9 +150,9 @@ class Entry(pyproteins.container.Core.Container):
         self.parseGO()
         self.parseLineage()
         self.parseAC()
-        if PfamCache:
-            self.parseDomain()
-        self.parseDomain()     
+        #if PfamCache:
+        #    self.parseDomain()
+        #self.parseDomain()
         self.parseSse()
         self.parseSequence()
         self.parsePDB()
@@ -232,9 +232,9 @@ class Entry(pyproteins.container.Core.Container):
             self.pdbRef.append(PDBref(e))
 
     def parseDomain(self):
-        try: 
+        try:
             self.domains=getPfamCollection().map(uniprotID=self.id)
-        except: 
+        except:
             self.domains=[]
 
         #self.domains = []
@@ -271,20 +271,19 @@ class Entry(pyproteins.container.Core.Container):
     #    pass
 
     def get_xref(self):
-        dic_xref={'EMBL':{'protein': [], 'genome': []}, 'RefSeq':{'protein': [], 'genome': []}}    
+        # print("GET XREF")
+        dic_xref = {'EMBL': {}, 'RefSeq': {}}
         # Search EMBL
         for e in self.xmlHandler.find_all("dbReference", type="EMBL"):
             if str(e.parent.name) == 'entry':
-                dic_xref["EMBL"]["genome"].append(e["id"])
                 for e_prot_id in e.find_all('property',type='protein sequence ID'):
-                    dic_xref["EMBL"]["protein"].append(e_prot_id["value"])
+                    dic_xref["EMBL"][e["id"]] = e_prot_id["value"]
         # Search RefSeq
         for e in self.xmlHandler.find_all("dbReference", type="RefSeq"):
             if str(e.parent.name) == 'entry':
-                dic_xref["RefSeq"]["protein"].append(e["id"])
-                for e_prot_id in e.find_all('property',type='nucleotide sequence ID'):       
-                    dic_xref["RefSeq"]["genome"].append(e_prot_id["value"])
-        return dic_xref     
+                for e_prot_id in e.find_all('property',type='nucleotide sequence ID'):
+                    dic_xref["RefSeq"][e_prot_id["value"]] = e["id"]
+        return dic_xref
 
 
     @property
@@ -570,7 +569,7 @@ class UniprotKW():
 class Genome():
     def __init__(self,xmlHandler):
         self.searchEMBL(xmlHandler)
-        self.searchRefSeq(xmlHandler)        
+        self.searchRefSeq(xmlHandler)
 
     def searchEMBL(self,xmlHandler):
         self.EMBLRef=[]
@@ -580,7 +579,7 @@ class Genome():
                 self.EMBLRef.append(e['id'])
                 for e_prot_id in e.find_all('property',type='protein sequence ID'):
                     self.EMBLProteinRef.append(e_prot_id['value'])
-    
+
     def searchRefSeq(self,xmlHandler):
         self.RefSeqRef=[]
         self.RefSeqProteinRef=[]
