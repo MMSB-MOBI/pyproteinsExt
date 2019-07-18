@@ -469,13 +469,17 @@ class Topology():
         protein_index = cds.index(protein_feature)
 
         # Get neighborhood
-        try:
-            neighborhood = cds[protein_index-number_neighbors:protein_index+number_neighbors+1]
-        except IndexError:
-            raise Exception("Index error : neighborhood too small. Handle this.")
+        start = protein_index - number_neighbors
+        if start < 0 : 
+            start = 0
+        end = protein_index + number_neighbors + 1
+        if end > len(cds) : 
+            end = len(cds)    
+        neighborhood = cds[start:end]
 
         # Correct neighborhood if not in same_contig and delete anchor protein
         neighborhood = [n for n in neighborhood if n.source == protein_feature.source]
+        #print(neighborhood)
         neighborhood.remove(protein_feature)
 
         # Create filters for relaunch genome feature getting
