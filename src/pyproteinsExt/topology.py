@@ -488,13 +488,19 @@ class Topology():
         neighborhood.remove(protein_feature)
 
         # Create filters for relaunch genome feature getting
-        locus_tags = []
+        filter_info = {}
         for n in neighborhood:
             if not n.info.get("locus_tag"):
-                raise Exception("locus_tag doesn't exist for", n, ". Handle this.")
-            locus_tags += n.info["locus_tag"]
-        filter_info = {'locus_tag': locus_tags}
-
+                # Test with protein_id
+                if not n.info.get("protein_id"):
+                    raise Exception("No locus_tag, no_protein_id for", self.prot, "Handle this.")
+                if "protein_id" not in filter_info:    
+                    filter_info["protein_id"] = []
+                filter_info["protein_id"] += n.info["protein_id"]
+            else:
+                if "locus_tag" not in filter_info:
+                    filter_info["locus_tag"] = []
+                filter_info["locus_tag"] += n.info["locus_tag"]
         # Get genome features again, just keep neighbors and this time keep their sequences.
         # print("NEIGHBORHOOD FEATURES")
         self.set_neighborhood_features(enaColl, info_filter=filter_info, keep_sequence=True, type_filter=["CDS"])
