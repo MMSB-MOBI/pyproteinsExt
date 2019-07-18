@@ -440,8 +440,11 @@ class Topology():
         self.genome_ena_entry = self.get_genome_features(enaColl, type="all_genome", **kwargs)
 
     def set_neighborhood(self, number_neighbors, enaColl):
-        def filter_CDS(feature):
-            if feature.type == "CDS":
+        def filter_type(feature, **kwargs):
+            type = kwargs.get("type")
+            if not type: 
+                raise Exception("Give type argument to filter_type()")
+            if feature.type == type:
                 return True
             return False
 
@@ -458,7 +461,7 @@ class Topology():
 
         # Filter CDS
         # print("filter CDS")
-        cds = self.genome_ena_entry.filter(filter_CDS).features
+        cds = self.genome_ena_entry.filter(filter_type, type="CDS").features
 
         # Find protein
         ena_protein_ref = self.uniprot_xref["EMBL"]["protein"][0]
