@@ -19,6 +19,9 @@ def strip(string):
         return string.split(".")[0]
     return None
 
+#Just name new type of error to catch it
+class FormatError(Exception):
+    pass
 
 class EntrySet(pyproteins.container.customCollection.EntrySet):
     def __init__(self, **kwargs):
@@ -35,7 +38,7 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
 
 class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="https://www.ebi.ac.uk/ena/data/view/",
-                 fileName=None, ext="&display.txt", charge_empty=False,
+                 fileName=None, ext="&display=txt", charge_empty=False,
                  rerun=False, url_id=None, **kwargs):
         if not id:
             raise TypeError('identifier is empty')
@@ -84,6 +87,10 @@ class Entry(pyproteins.container.Core.Container):
 
         if isinstance(rawData, bytes):
             rawData = rawData.decode()
+
+        if not rawData.startswith("ID"):
+            raise FormatError("Not embl format")
+
         feature = None
         l_nb = 0
         dic_nb = {}
