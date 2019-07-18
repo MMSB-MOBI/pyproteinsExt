@@ -258,15 +258,40 @@ MGWRAAGALLLALLLHGRLLAVTHGLRAYDGLSLPED...
 
 #### HMMR results container
 
-1. Load multiple file iterate over domain hits
-2. iterate over proteins
+You can give one or several file to parse method. For each protein, an entry `hmmrObj` is created
 
 ```python
 import pyproteinsExt.hmmrContainer as hm
-hmmrObj = hm.parse(inputFile='hmmsearch_A.out')
-hmmrObj += hmmrObj.parse(inputFile='hmmsearch_B.out')
-hmmrObj_transpose= hmmrObj.T()
+hmmrContainer = hm.parse('hmmsearch_A.out', 'hmmsearch_B.out')
 ```
+
+**hmmrObj** attributes and properties:  
+* prot : protein name
+* domain : domain name
+* hit : dictionnary that contains hmmr hit informations, like score, evalue, alignment positions...
+* sequence : give protein sequence that corresponds to domain
+* start : give domain start in protein
+* end : give domain end in protein
+
+```python
+for e in hmmrContainer:
+    print(e.prot)
+    print(e.domain)
+    print(e.hit)
+    print(e.sequence)
+    print(e.start)
+    print(e.end)
+```
+will print 
+```text
+tr|A0A1Q6ZBW6|A0A1Q6ZBW6_9ARCH
+PF08022_full
+{'hmmID': 'PF08022_full', 'aliID': 'tr|A0A1Q6ZBW6|A0A1Q6ZBW6_9ARCH', 'header': '1  score: 16.0 bits;  conditional E-value: 0.00014', 'score': '16.0', 'bias': '0.0', 'cEvalue': '0.00014', 'iEvalue': '0.24', 'hmmFrom': '26', 'hmmTo': '102', 'aliFrom': '37', 'aliTo': '99', 'envFrom': '27', 'envTo': '102', 'acc': '0.89', 'hmmStringLetters': 'fkwkpGqhvylsvpsisklllesHPFtiasapekddelslvirarggwtkrlaelaekseaesksklkvlieGPYGa', 'matchString': ' +++pGq+++++vp + ++     P ++  ++  ++e  +vi++ g ++++l e+              ++ GPYG+', 'aliStringLetters': 'HQANPGQFAMVWVPGVDEV-----PMSVLAIHG-KSEAGVVIKKGGPVSTALWEKKVGD--------IFFVRGPYGH', 'hmmSymbolStuff': {'CS': 'XXXXXXXXXXXXXXXXXXX--XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--TTSTTSH'}, 'aliSymbolStuff': {'PP': '5789*************88.....******999.******************9976555........69*******6'}}
+HQANPGQFAMVWVPGVDEVPMSVLAIHGKSEAGVVIKKGGPVSTALWEKKVGDIFFVRGPYGH
+37
+99
+...
+```    
 
 #### Pfam container
 
