@@ -23,7 +23,8 @@ def isOboNamespaced(term):
 
 
 class Ontology():
-    def __init__(self, file=None):
+    def __init__(self, file=None, oType='GO'):
+        self.type =oType
         # super(Ontology, self).__init__(ressource)
         if file:
             self.onto = get_ontology("file://" + file).load()
@@ -31,12 +32,27 @@ class Ontology():
     # find terms based on namespaced Id or text description in label
     def find(self, stringTerm):
         if isOboNamespaced(stringTerm):
-            return self.onto.search(id=stringTerm)
+            elem = self.onto.search(id=stringTerm)            
+            if not elem:               
+                elem = self.onto.search(hasAlternativeId=stringTerm)
+            if not elem:
+                raise KeyError(f"No element \"{stringTerm}\"")
+            return elem
         return self.onto.search(label=stringTerm)
 
     def findOne(self, stringTerm):
+    #    if isOboNamespaced(stringTerm):
+    #        return self.onto.search_one(id=stringTerm)
+    #    return self.onto.search_one(label=stringTerm)
         if isOboNamespaced(stringTerm):
-            return self.onto.search_one(id=stringTerm)
+            elem = self.onto.search_one(id=stringTerm)
+            if not elem:
+                #print("T2")
+                elem = self.onto.search_one(hasAlternativeId=stringTerm)
+            if not elem:
+                #print("T3")
+                raise KeyError(f"No element \"{stringTerm}\"")
+            return  elem
         return self.onto.search_one(label=stringTerm)
 
     # if term is a/list of string coherce it into matching ontology classes
