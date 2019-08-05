@@ -3,6 +3,11 @@ import gzip
 
 
 def parse(inputFile=None):
+    """Will parse fasta file to create Container
+    
+    :param inputFile: path of fasta file to parse. 
+    :return: fastaContainerFactory.Container
+    """
     mainContainer = Container()
     fnOpen = open
     t = 'r'
@@ -36,15 +41,38 @@ def _parseBuffer(input):
 
 
 class Container(pyproteinsExt.proteinContainer.Container):
+    """ Iterable container, that stores all Fasta objects """
     def __init__(self, input=None):
         super().__init__(_parseBuffer, input)
 
 
 class Fasta():
+    """
+    Fasta object stores informations about one fasta entry. 
+
+    :param prot: Protein id, first element of header, before first space
+    :type prot: str
+    :param seq: Amino acids or nucleotides sequence
+    :type seq: str
+    :param header: Fasta header
+    :type header: str
+    """
+
     def __init__(self, prot, header, seq):
+        """ Constructor method """
         self.prot = prot
         self.seq = seq
         self.header = header
 
     def get_subsequence(self, start, end):
+        """
+        Get subsequence of entry, from start to end position
+        
+        :param start: Start position
+        :type start: int
+        :param end: End position
+        :type end: int
+        :return: subsequence
+        :rtype: str
+        """
         return self.seq[start-1:end]
