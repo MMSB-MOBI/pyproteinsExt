@@ -4,6 +4,12 @@ import gzip
 
 
 def parse(inputFile=None):
+    """
+    Parse tmhmm output to create Container
+
+    :param inputFile: path to tmhmm output
+    :return: tmhmmContainerFactory.Container
+    """
     mainContainer = Container()
     fnOpen = open
     t = 'r'
@@ -52,11 +58,25 @@ def _parseBuffer(input):
 
 
 class Container(pyproteinsExt.proteinContainer.Container):
+    """ Iterable container, that stores TMHMM_Obj objects """
     def __init__(self, input=None):
         super().__init__(_parseBuffer, input)
 
 
 class TMHMM_Obj():
+    """
+    TMHMM_Obj object stores informations about one TMHMM entry. 
+
+    :param prot: Protein id
+    :type prot: str
+    :param prot_length: Protein length
+    :type prot_length: int
+    :param nb_helix: Number of predicted transmembrane helix by TMHMM
+    :type nb_helix: int
+    :param fragment: List of proteins fragments (inside, outside or helix)
+    :type fragments: Fragment[]
+    """
+
     def __init__(self, prot, prot_length, nb_helix, fragments):
         self.prot = prot
         self.prot_length = prot_length
@@ -65,8 +85,11 @@ class TMHMM_Obj():
 
     @property
     def topology_seq(self):
+        """
+        Protein sequence with 'o' for outside loop, 'i' for inside loop and helix number for helixes
 
-    def get_topology_seq(self):
+        .. warning:: obsolete if we have more than 9 helixes
+        """
         # /!\ WARNING : obsolete if we have more than 9 helixes !!! Change that.
         topology_seq = ["*"]*self.prot_length
         helix_number = 1
@@ -86,6 +109,15 @@ class TMHMM_Obj():
 
 
 class Fragment():
+    """
+    :param cellular_location: TMHMM cellular location of fragment (inside|outside|TMHelix)
+    :type cellular_location: str
+    :param start: fragment start position
+    :type start: int
+    :param end: fragment end position
+    :type end: int
+    """
+
     def __init__(self, cellular_location, start, end):
         self.cellular_location = cellular_location
         self.start = start
