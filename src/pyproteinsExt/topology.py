@@ -313,6 +313,49 @@ class TopologyContainer(pyproteinsExt.proteinContainer.Container):
             e.set_helix_fragments()
             e.set_loop_fragments()
 
+    def add_neighborhood_clusters(self, cluster_tsv):
+        cluster_nb = 0
+        browse_representative = set()
+        f = open(cluster_tsv, "r")
+        for l in f:
+            l_split = l.rstrip().split("\t")
+            representative = l_split[0].split(" ")[0].strip('"')
+            seq = l_split[1].split(" ")[0].strip('"')
+            prot = seq.split("+")[0]
+            seq_name = seq.split("+")[1]
+            if representative not in browse_representative:
+                cluster_nb += 1
+                browse_representative.add(representative)
+
+            if not hasattr(self.entries[prot], "neighborhood_clusters"):
+                self.entries[prot].neighborhood_clusters = {}
+
+            self.entries[prot].neighborhood_clusters[seq_name] = cluster_nb
+        f.close()
+
+        for e in self:
+            if not hasattr(e, "neighborhood_clusters"):
+                e.neighborhood_clusters = {}
+
+    def neighborhood_common_matrix(self):
+        def get_common_size(list1, list2):
+            common_size = 0
+            for n in list1:
+                if n in list2:
+                    common_size += 1
+            return common_size
+
+        matrix = {}
+        for i in range(100):
+            for j in range(i+1, 100):
+                neighbors_cluster_list_1 = self[i].get_neighborhood_clusters_number()
+                neighbors_cluster_list_2 = self[j].get_neighborhood_clusters_number()
+                if not self[i].prot in matrix: 
+                    matrix[self[i].prot] = {}
+                matrix[self[i].prot][self[j].prot] = get_common_size(neighbors_cluster_list_1, neighbors_cluster_list_2)
+
+        return matrix            
+                
 
 class Topology():
     def __init__(self, prot, hmmr, tmhmm, fasta, taxo=None, uniprot_entry=None,
