@@ -417,10 +417,10 @@ class HMMObj():
         self.overlapped_hits=[]
 
     def is_overlapping(self,other_hit,accept_overlap_size):
-        start1=self.get_start()
-        end1=self.get_end()
-        start2=other_hit.get_start()
-        end2=other_hit.get_end()
+        start1=self.start
+        end1=self.end
+        start2=other_hit.start
+        end2=other_hit.end
         residues1=set([i for i in range(start1,end1+1)])
         residues2=set([i for i in range(start2,end2+1)])
         if len(residues1.intersection(residues2))>accept_overlap_size:
