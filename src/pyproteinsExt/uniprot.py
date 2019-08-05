@@ -285,6 +285,11 @@ class Entry(pyproteins.container.Core.Container):
                     dic_xref["RefSeq"][e_prot_id["value"]] = e["id"]
         return dic_xref
 
+    def parseInterpro(self):
+        self.Interpro = []
+        for e in self.xmlHandler.find_all("dbReference", type = "InterPro"):
+            for name in e.find_all("property", type = "entry name"):
+                self.Interpro.append(Interpro(e))
 
     @property
     def fasta(self):
@@ -564,7 +569,20 @@ class UniprotKW():
         self.id = e['id']
         self.term = e.text
     def __repr__(self):
-        return self.id + ":" + self.term
+        return self.id + ":" + self.term     
+
+class Interpro():
+    def __init__(self,e):
+        self.id = e["id"]
+        self.getName(e)
+
+    def __repr__(self):
+        return self.id + ":" + self.name
+
+    def getName(self,e): 
+        for name in e.find_all("property", type = "entry name"):
+           self.name = name["value"]
+
 
 class Genome():
     def __init__(self,xmlHandler):
