@@ -1,5 +1,7 @@
 # pyproteinsExt
 
+[Documentation](docs/_build/html/index.html)
+
 ## notebook test&examples
 
 TO DO
@@ -258,15 +260,85 @@ MGWRAAGALLLALLLHGRLLAVTHGLRAYDGLSLPED...
 
 #### HMMR results container
 
-1. Load multiple file iterate over domain hits
-2. iterate over proteins
+You can give one or several file to parse method. For each protein, an entry `hmmrObj` is created
 
 ```python
 import pyproteinsExt.hmmrContainer as hm
-hmmrObj = hm.parse(inputFile='hmmsearch_A.out')
-hmmrObj += hmmrObj.parse(inputFile='hmmsearch_B.out')
-hmmrObj_transpose= hmmrObj.T()
+hmmrContainer = hm.parse('hmmsearch_A.out', 'hmmsearch_B.out')
 ```
+
+**hmmrObj** attributes and properties:  
+* prot : protein name
+* domain : domain name
+* hit : dictionnary that contains hmmr hit informations, like score, evalue, alignment positions...
+* sequence : give protein sequence that corresponds to domain
+* start : give domain start in protein
+* end : give domain end in protein
+
+```python
+for e in hmmrContainer:
+    print(e.prot)
+    print(e.domain)
+    print(e.hit)
+    print(e.sequence)
+    print(e.start)
+    print(e.end)
+```
+will print 
+```text
+tr|A0A1Q6ZBW6|A0A1Q6ZBW6_9ARCH
+PF08022_full
+{'hmmID': 'PF08022_full', 'aliID': 'tr|A0A1Q6ZBW6|A0A1Q6ZBW6_9ARCH', 'header': '1  score: 16.0 bits;  conditional E-value: 0.00014', 'score': '16.0', 'bias': '0.0', 'cEvalue': '0.00014', 'iEvalue': '0.24', 'hmmFrom': '26', 'hmmTo': '102', 'aliFrom': '37', 'aliTo': '99', 'envFrom': '27', 'envTo': '102', 'acc': '0.89', 'hmmStringLetters': 'fkwkpGqhvylsvpsisklllesHPFtiasapekddelslvirarggwtkrlaelaekseaesksklkvlieGPYGa', 'matchString': ' +++pGq+++++vp + ++     P ++  ++  ++e  +vi++ g ++++l e+              ++ GPYG+', 'aliStringLetters': 'HQANPGQFAMVWVPGVDEV-----PMSVLAIHG-KSEAGVVIKKGGPVSTALWEKKVGD--------IFFVRGPYGH', 'hmmSymbolStuff': {'CS': 'XXXXXXXXXXXXXXXXXXX--XXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--TTSTTSH'}, 'aliSymbolStuff': {'PP': '5789*************88.....******999.******************9976555........69*******6'}}
+HQANPGQFAMVWVPGVDEVPMSVLAIHGKSEAGVVIKKGGPVSTALWEKKVGDIFFVRGPYGH
+37
+99
+...
+```    
+
+#### TMHMM results container
+
+Container that store TMHMM results. You can only give one tmhmm result file to parse (for now).
+
+```python
+import pyproteinsExt.tmhmmContainer as tmhmm
+tmhmmContainer = tmhmm.parse('tmhmm.out')
+```
+Container is a collection of TMHMM_Obj objects.
+
+**TMHMM_Obj** attributes and properties:
+* prot : protein name
+* prot_length : protein length
+* nb_helix : number of predicted helixes
+* fragments : List of Fragment object. Each fragment have attributes cellular_location, start and end. 
+* topology_seq : protein sequence with 'o' for outside loop, 'i' for inside loop and helix number for helixes. **WARNING : doesn't work if there are more than 9 helixes (use 2 characters instead of 1)**
+
+```python
+for e in tmhmmContainer:
+    print(e.prot)
+    print(e.prot_length)
+    print(e.nb_helix)
+    print(len(e.fragments),"fragments")
+    for f in e.fragments:
+        print(f.cellular_location, f.start, f.end)
+```
+will print 
+```text
+tr|A0A2E0DFV0|A0A2E0DFV0_9EURY
+155
+4
+9 fragments
+outside 1 5
+TMhelix 6 25
+inside 26 53
+TMhelix 54 76
+outside 77 90
+TMhelix 91 109
+inside 110 129
+TMhelix 130 152
+outside 153 155
+...
+```
+
 
 #### Pfam container
 
