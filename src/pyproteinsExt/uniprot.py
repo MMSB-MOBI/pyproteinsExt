@@ -77,9 +77,9 @@ def proxySetting(**param):
 
 
 def strip(string):
-    subString = re.search("^[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", string)
+    subString = re.search(".xml$", string)
     if subString:
-        return subString.group()
+        return string.split(".")[0]
 
     return None
 
@@ -93,6 +93,8 @@ def capture(string):
 def isValidID(string):
     if re.match("^[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}$", string):
         return True
+    if re.match("^[A-Z]{3}[0-9]{5}$", string):
+        return True    
     return False
 
 class fetchEntries():
@@ -131,10 +133,10 @@ class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fileName=None):
         if not id:
             raise TypeError('identifier is empty')
-        c_id = capture(id)
-        if not c_id:
-            raise ValueError('could not extract uniprot identifier from provided id parameter ' + id)
-        super().__init__(c_id, url=baseUrl + str(c_id) + '.xml', fileName=fileName)
+        #c_id = capture(id)
+        #if not c_id:
+        #    raise ValueError('could not extract uniprot identifier from provided id parameter ' + id)
+        super().__init__(id, url=baseUrl + str(id) + '.xml', fileName=fileName)
         #pyproteins.container.Core.Container.__init__(self, id, url=baseUrl + str(id) + '.xml', fileName=fileName)
 
         #print id + '-->' + str(fileName)
@@ -160,6 +162,7 @@ class Entry(pyproteins.container.Core.Container):
         self.parseDI()
         self.parseORPHA()
         self.xref = self.get_xref()
+        self.parseInterpro()
 
     def __hash__(self):
         return hash(self.id)
@@ -266,6 +269,7 @@ class Entry(pyproteins.container.Core.Container):
         self.KW = []
         for e in self.xmlHandler.find_all("keyword"):
             self.KW.append(UniprotKW(e))
+
     def parseSequence(self):
         self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
     #    pass
