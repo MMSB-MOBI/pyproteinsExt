@@ -1,5 +1,7 @@
 # pyproteinsExt
 
+[Documentation](docs/_build/html/index.html)
+
 ## notebook test&examples
 
 TO DO
