@@ -63,6 +63,12 @@ class Entry(pyproteins.container.Core.Container):
                 fileName = None
                 self.__init__(self.id, new_base_url, fileName, ext, rerun=True, url_id=short_id, **kwargs)
 
+    def __getitem__(self, key):
+        try:
+            return [f for f in self.features if f.name == key][0]
+        except IndexError:
+            raise KeyError(key)
+
     def embl_parsing_features(self, rawData, **kwargs):
         def conserve_feature(feature, type_filter, info_filter):
             if type_filter:
