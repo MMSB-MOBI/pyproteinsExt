@@ -62,7 +62,9 @@ class TMHMM_Obj():
         self.prot_length = prot_length
         self.nb_helix = nb_helix
         self.fragments = fragments
-        self.topology_seq = self.get_topology_seq()
+
+    @property
+    def topology_seq(self):
 
     def get_topology_seq(self):
         # /!\ WARNING : obsolete if we have more than 9 helixes !!! Change that.
