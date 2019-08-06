@@ -1,6 +1,6 @@
 # pyproteinsExt
 
-[Documentation](docs/_build/html/index.html)
+[Documentation](https://cecilpert.github.io/myPyproteinsExt/)
 
 ## notebook test&examples
 
