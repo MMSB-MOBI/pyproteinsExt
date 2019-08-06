@@ -21,6 +21,13 @@ reStrandsLine = re.compile("^([\s]*([\S]+)[\s]+([\d]+)[\s])([\S]+)[\s]([\d]+)[\s
 #reInstance = re.compile('(# hmmsearch.+?(?=\[ok\])\[ok\])', re.DOTALL)
 
 def parse(*inputFiles):
+    """
+    Parse one or several hmmr results file and store them into container. 
+
+    :param *inputFiles: One or several path to input files, comma-separated
+    :return: hmmrContainerFactory.Container
+    """
+
     upType = None
     bigBuffer = ''
     mainContainer = Container()
@@ -55,6 +62,14 @@ def parse(*inputFiles):
 
 
 class Container(object):
+    """
+    Container that stores hmmr results under different data structure
+
+    :param hmmrEntries: 
+    :param dIndex:
+    :param pIndex:
+    """
+
     def __init__(self, input=None, upType=None):
        # self.queryHmmFile=None             #../../../data/fad_binding.hmm
        # self.targetSequenceDatabase=None   #./Trembl_50.fasta
@@ -410,6 +425,13 @@ def plumbParse(buffer, index, mainStringAccumulator, stuffContainer, reSymbolStu
     return mainStringAccumulator, stuffContainer
 
 class HMMObj():
+    """
+    Object that stores information about one protein domain hit
+    :param prot: 
+    :param domain: 
+    :param hit:
+    """
+
     def __init__(self,prot,domain,hit):
         self.prot=prot
         self.domain=domain
@@ -417,6 +439,14 @@ class HMMObj():
         self.overlapped_hits=[]
 
     def is_overlapping(self,other_hit,accept_overlap_size):
+        """
+        Check if two HMMObj overlaps.
+
+        :param other_hit: 
+        :param accept_overlap_size: 
+
+        :return: True if overlapping size is bigger than accept_overlap_size. False elsewhere. 
+        """
         start1=self.start
         end1=self.end
         start2=other_hit.start
@@ -432,12 +462,21 @@ class HMMObj():
 
     @property    
     def sequence(self):
+        """
+        Domain sequence in protein, without indels.
+        """
         return self.hit.aliStringLetters.replace("-","").upper()
 
     @property
     def start(self):
+        """
+        Domain start position in protein
+        """
         return int(self.hit.aliFrom)
 
     @property
     def end(self):
+        """
+        Domain end position in protein
+        """
         return int(self.hit.aliTo)
