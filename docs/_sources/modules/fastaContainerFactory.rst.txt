@@ -42,3 +42,4 @@ Content
 .. automodule:: fastaContainerFactory
     :members:
     :show-inheritance:
+    :member-order: bysource

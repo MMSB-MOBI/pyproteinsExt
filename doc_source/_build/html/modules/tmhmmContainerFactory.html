@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="hmmrContainerFactory" href="hmmrContainerFactory.html" />
     <link rel="prev" title="fastaContainerFactory" href="fastaContainerFactory.html" /> 
 </head>
 
@@ -87,6 +88,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-tmhmmContainerFactory">Content</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="hmmrContainerFactory.html">hmmrContainerFactory</a></li>
 </ul>
 </li>
 </ul>
@@ -212,26 +214,25 @@
 </div>
 <div class="section" id="module-tmhmmContainerFactory">
 <span id="content"></span><h2>Content<a class="headerlink" href="#module-tmhmmContainerFactory" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="tmhmmContainerFactory.parse">
+<code class="sig-prename descclassname">tmhmmContainerFactory.</code><code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param">inputFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tmhmmContainerFactory.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse tmhmm output to create Container</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inputFile</strong> – path to tmhmm output</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>tmhmmContainerFactory.Container</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="class">
 <dt id="tmhmmContainerFactory.Container">
 <em class="property">class </em><code class="sig-prename descclassname">tmhmmContainerFactory.</code><code class="sig-name descname">Container</code><span class="sig-paren">(</span><em class="sig-param">input=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tmhmmContainerFactory.Container" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pyproteinsExt.proteinContainer.Container</span></code></p>
 <p>Iterable container, that stores TMHMM_Obj objects</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="tmhmmContainerFactory.Fragment">
-<em class="property">class </em><code class="sig-prename descclassname">tmhmmContainerFactory.</code><code class="sig-name descname">Fragment</code><span class="sig-paren">(</span><em class="sig-param">cellular_location</em>, <em class="sig-param">start</em>, <em class="sig-param">end</em><span class="sig-paren">)</span><a class="headerlink" href="#tmhmmContainerFactory.Fragment" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>cellular_location</strong> (<em>str</em>) – TMHMM cellular location of fragment (inside|outside|TMHelix)</p></li>
-<li><p><strong>start</strong> (<em>int</em>) – fragment start position</p></li>
-<li><p><strong>end</strong> (<em>int</em>) – fragment end position</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="class">
@@ -261,16 +262,17 @@
 
 </dd></dl>
 
-<dl class="function">
-<dt id="tmhmmContainerFactory.parse">
-<code class="sig-prename descclassname">tmhmmContainerFactory.</code><code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param">inputFile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tmhmmContainerFactory.parse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse tmhmm output to create Container</p>
+<dl class="class">
+<dt id="tmhmmContainerFactory.Fragment">
+<em class="property">class </em><code class="sig-prename descclassname">tmhmmContainerFactory.</code><code class="sig-name descname">Fragment</code><span class="sig-paren">(</span><em class="sig-param">cellular_location</em>, <em class="sig-param">start</em>, <em class="sig-param">end</em><span class="sig-paren">)</span><a class="headerlink" href="#tmhmmContainerFactory.Fragment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>inputFile</strong> – path to tmhmm output</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>tmhmmContainerFactory.Container</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cellular_location</strong> (<em>str</em>) – TMHMM cellular location of fragment (inside|outside|TMHelix)</p></li>
+<li><p><strong>start</strong> (<em>int</em>) – fragment start position</p></li>
+<li><p><strong>end</strong> (<em>int</em>) – fragment end position</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -285,6 +287,8 @@
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="hmmrContainerFactory.html" class="btn btn-neutral float-right" title="hmmrContainerFactory" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="fastaContainerFactory.html" class="btn btn-neutral float-left" title="fastaContainerFactory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

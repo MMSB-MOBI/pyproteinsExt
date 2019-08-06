@@ -427,6 +427,7 @@ def plumbParse(buffer, index, mainStringAccumulator, stuffContainer, reSymbolStu
 class HMMObj():
     """
     Object that stores information about one protein domain hit
+
     :param prot: 
     :param domain: 
     :param hit:
@@ -437,6 +438,27 @@ class HMMObj():
         self.domain=domain
         self.hit=hit
         self.overlapped_hits=[]
+
+    @property    
+    def sequence(self):
+        """
+        Domain sequence in protein, without indels.
+        """
+        return self.hit.aliStringLetters.replace("-","").upper()
+
+    @property
+    def start(self):
+        """
+        Domain start position in protein
+        """
+        return int(self.hit.aliFrom)
+
+    @property
+    def end(self):
+        """
+        Domain end position in protein
+        """
+        return int(self.hit.aliTo)    
 
     def is_overlapping(self,other_hit,accept_overlap_size):
         """
@@ -459,24 +481,3 @@ class HMMObj():
 
     def reinitialize_overlapped_hits(self):
         self.overlapped_hits=[]
-
-    @property    
-    def sequence(self):
-        """
-        Domain sequence in protein, without indels.
-        """
-        return self.hit.aliStringLetters.replace("-","").upper()
-
-    @property
-    def start(self):
-        """
-        Domain start position in protein
-        """
-        return int(self.hit.aliFrom)
-
-    @property
-    def end(self):
-        """
-        Domain end position in protein
-        """
-        return int(self.hit.aliTo)

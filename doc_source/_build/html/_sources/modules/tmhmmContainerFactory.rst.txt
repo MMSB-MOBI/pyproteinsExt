@@ -62,3 +62,4 @@ Content
 .. automodule:: tmhmmContainerFactory
     :members:
     :show-inheritance:
+    :member-order: bysource
