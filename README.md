@@ -1,6 +1,6 @@
 # pyproteinsExt
 
-[Documentation](https://cecilpert.github.io/myPyproteinsExt/)
+[Documentation](https://cecilpert.github.io/my_pyproteinsExt/)
 
 ## notebook test&examples
 
