@@ -21,6 +21,7 @@ InstanceAttributeDocumenter.add_directive_header = iad_add_directive_header
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../src/pyproteinsExt'))
+sys.path.insert(0, "/Users/chilpert/Dev/pyproteins/src")
 
 
 # -- Project information -----------------------------------------------------

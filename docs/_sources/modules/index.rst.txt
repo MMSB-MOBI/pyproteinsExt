@@ -6,7 +6,6 @@ Modules
    
    proteinStudy
    enaContainer
-   refseqContainer
    fastaContainerFactory
    tmhmmContainerFactory
    hmmrContainerFactory

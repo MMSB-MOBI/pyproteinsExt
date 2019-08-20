@@ -7,6 +7,7 @@ enaEntrySet = None
 
 
 def getENACollection():
+    '''Initialize empty collection'''
     print("Get ENA Collection")
     global enaEntrySet
     enaEntrySet = EntrySet()
@@ -24,6 +25,13 @@ class FormatError(Exception):
     pass
 
 class EntrySet(pyproteins.container.customCollection.EntrySet):
+    """
+    Inherits from EntrySet, collection of entries.
+
+    :param hmmrEntries: 
+    :param dIndex:
+    :param pIndex:
+    """
     def __init__(self, **kwargs):
         home = expanduser("~")
         cachePath = home
@@ -32,13 +40,21 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
                          indexer=strip)
 
     def serialize(self, ext=''):
+        """Write entries to cache"""
         print("serializing ena collection")
         super().serialize(ext=ext)
 
 
 class Entry(pyproteins.container.Core.Container):
+    """
+    Entry object. Store informations about one ENA genome entry, collect from Genbank file. 
+
+    :param metadata: 
+    :param features:
+    :param pIndex:
+    """
     def __init__(self, id, baseUrl="https://www.ebi.ac.uk/ena/data/view/",
-                 fileName=None, ext="&display=txt", charge_empty=False,
+                 fileName=None, ext="&display=txt", charge_features=True,
                  rerun=False, url_id=None, **kwargs):
         if not id:
             raise TypeError('identifier is empty')
@@ -49,7 +65,9 @@ class Entry(pyproteins.container.Core.Container):
         super().__init__(id, url=url, fileName=fileName)
         self.rerun = rerun
         self.type = type
-        if charge_empty:
+        if not rerun:
+            self.metadata = self.get_metadata()
+        if not charge_features:
             self.features = []
         else:
             self.embl_parsing_features(self.raw, **kwargs)
@@ -62,6 +80,31 @@ class Entry(pyproteins.container.Core.Container):
                 ext = ".dat.gz"
                 fileName = None
                 self.__init__(self.id, new_base_url, fileName, ext, rerun=True, url_id=short_id, **kwargs)
+    
+    def get_metadata(self):
+        """Parse genbank file (rawdata) to collect metadata. 
+        Metadata collected are Project and Sample ids for now. 
+        
+        :return: dictionnary {"Project" : project_id, "Sample" : sample_id}
+        """
+        metadata_store = {"Project": "", "Sample": ""}
+        project_re = re.compile("^PR\s{3}Project:([\w]+)")
+        sample_re = re.compile("^DR\s{3}BioSample; ([\w]+)")
+
+        if isinstance(self.raw, bytes):
+            rawData = self.raw.decode()
+        else:
+            rawData = self.raw
+
+        for l in rawData.split("\n"):
+            project_match = project_re.match(l)
+            sample_match = sample_re.match(l)
+            if project_match:
+                metadata_store["Project"] = project_match.group(1)
+            if sample_match:
+                metadata_store["Sample"] = sample_match.group(1)
+        
+        return metadata_store
 
     def __getitem__(self, key):
         try:
@@ -70,6 +113,9 @@ class Entry(pyproteins.container.Core.Container):
             raise KeyError(key)
 
     def embl_parsing_features(self, rawData, **kwargs):
+        """Parse genbank file to collect features informations. 
+        Complete features attributes.
+        """
         def conserve_feature(feature, type_filter, info_filter):
             if type_filter:
                 if feature.type not in type_filter:
@@ -166,6 +212,13 @@ class Entry(pyproteins.container.Core.Container):
         self.features = list_features
 
     def filter(self, fPredicat, **kwargs):
+        """Generic features filter function. Just keep features when fPredicat is True
+        
+        :param fPredicat: function that take at least a feature as argument and return True or False. 
+        :param **kwargs: optionnal arguments if needed for fPredicat
+        :type fPredicat: function
+        :type **kwargs: argument dictionnary
+        """
         new_Entry = Entry(self.id, self.id, charge_empty=True,
                           fileName=self.fileName)
         for f in self.features:
@@ -175,6 +228,13 @@ class Entry(pyproteins.container.Core.Container):
 
 
 class Feature():
+    """Feature object. Store information about one feature. 
+
+    :param type: feature type, can be CDS, gene, rRNA...
+    :param location: feature location in genome/contig
+    :param source: parent of this feature (for example, the genome for complete genome, a contig for uncompleted assemblies)
+    :param info: dictionnary with all Genbank informations about this feature. Keys are EMBL qualifiers, for example product, translation, gene... 
+    """
     def __init__(self, type, location):
         self.type = type
         self.location = location
