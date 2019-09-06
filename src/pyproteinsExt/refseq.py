@@ -135,39 +135,8 @@ class Entry(pyproteins.container.Core.Container):
 class Feature:
     def __init__(self, e):
         self.type = e.find("GBFeature_key").text
-        self.parseLocation(e)
+        self.location = e.find("GBFeature_location").text
         self.parseQualifiers(e)
-
-    def parseLocation(self, e):
-
-        def createLocation(location):
-            if "complement" in location:
-                strand = "-"
-                start = location.split("(")[1].split("..")[0].rstrip(")")
-                end = location.split("(")[1].split("..")[1].rstrip(")")
-            else:
-                strand = "+"
-                start = location.split("..")[0].rstrip(")")
-                end = location.split("..")[1].rstrip(")")
-
-            overlap0 = False
-            if "<" in start:
-                overlap0 = True
-                start = start.lstrip("<")
-            if ">" in end:
-                overlap0 = True
-                end = end.lstrip(">")
-
-            return Location(int(start), int(end), strand, overlap0)
-
-        self.locations = []
-        location = e.find("GBFeature_location").text
-        if "join" in location:
-            location = location.split("join(")[-1].rstrip(")")
-            for l in location.split(","):
-                self.locations.append(createLocation(l))
-        else:
-            self.locations.append(createLocation(location))
 
     def parseQualifiers(self, e):
         self.qualifiers = {}
