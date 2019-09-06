@@ -40,7 +40,8 @@ class Entry(pyproteins.container.Core.Container):
         if not id:
             raise TypeError('identifier is empty')
 
-        url = baseUrl+"efetch.fcgi?db=nucleotide&id="+id+"&retmode=xml"
+        #url = baseUrl+"efetch.fcgi?db=nucleotide&id="+id+"&retmode=xml"
+        url = baseUrl+"efetch.fcgi?db=protein&id="+id+"&retmode=xml"
 
         super().__init__(id, url=url, fileName=fileName)
 
