@@ -553,7 +553,7 @@ class Atom(object):
 
 	@property
 	def seqRes(self):
-		return str(self.resSeq) + str(self.iCode)
+		return str(self.resSeq.lstrip()) + str(self.iCode)
 
 	@property
 	def coordinates(self):
@@ -566,7 +566,7 @@ class Atom(object):
 	@property
 	def getResID(self):
 	#   return self.resName + str(self.resSeq) + ':' + self.chainID + ':' + self.iCode
-		return self.resName + self.seqRes + ':' + self.chainID
+		return self.resName + " " + self.seqRes + ':' + self.chainID
 
 	def __hash__(self):
 		tup = (self.recordName, self.serial, self.altLoc, self.resName, self.chainID, self.resSeq, self.iCode, self.x, self.y, self.z, self.occupancy, self.tempFactor, self.element, self.charge)
