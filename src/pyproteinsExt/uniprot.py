@@ -113,7 +113,7 @@ customary cache location is "/Users/guillaumelaunay/work/data/uniprot"
 class EntrySet(pyproteins.container.customCollection.EntrySet):
     def __init__(self, **kwargs):
         home = expanduser("~")
-        cachePath = home
+        cachePath = home     
       #  if 'collectionPath' in kwargs:
       #      cachePath = kwargs['collectionPath']
       #  if 'pfamCollectionPath' in kwargs:
@@ -130,9 +130,10 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
             getPfamCollection().serialize(ext=ext)
 
 class Entry(pyproteins.container.Core.Container):
-    def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fileName=None):
+    def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fetchable= True, fileName=None):
         if not id:
             raise TypeError('identifier is empty')
+
         #c_id = capture(id)
         #if not c_id:
         #    raise ValueError('could not extract uniprot identifier from provided id parameter ' + id)
@@ -141,7 +142,7 @@ class Entry(pyproteins.container.Core.Container):
 
         #print id + '-->' + str(fileName)
 
-        self.xmlHandler = self.getXmlHandler()
+        self.xmlHandler = self.getXmlHandler(fetchable=fetchable)
         if not self.xmlHandler:
             return None
 
