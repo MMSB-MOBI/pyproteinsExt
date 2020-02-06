@@ -15,12 +15,12 @@ from setuptools import setup
 
 setup(
   name = 'pyproteinsExt',
-  version = '1.5',
+  version = '1.7',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
   author = 'Guillaume Launay, Juliette Martin et al',
   author_email = 'pitooon@gmail.com, juliette.martin@ibcp.fr',
-  url = 'https://github.com/glaunay/pyproteinsExt', # use the URL to the github repo
+  url = 'https://github.com/MMSB-MOBI/pyproteinsExt', # use the URL to the github repo
   packages=find_packages('src'),
   package_dir={'': 'src'},
   include_package_data=True,
