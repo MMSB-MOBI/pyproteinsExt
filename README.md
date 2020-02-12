@@ -300,7 +300,7 @@ HQANPGQFAMVWVPGVDEVPMSVLAIHGKSEAGVVIKKGGPVSTALWEKKVGDIFFVRGPYGH
 Container that store TMHMM results. You can only give one tmhmm result file to parse (for now).
 
 ```python
-import pyproteinsExt.tmhmmContainer as tmhmm
+import pyproteinsExt.tmhmmContainerFactory as tmhmm
 tmhmmContainer = tmhmm.parse('tmhmm.out')
 ```
 Container is a collection of TMHMM_Obj objects.
