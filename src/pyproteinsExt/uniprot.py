@@ -157,6 +157,7 @@ class Entry(pyproteins.container.Core.Container):
         #    self.parseDomain()
         #self.parseDomain()
         self.parseSse()
+        self.Ensembl = self.parseEnsembl()
         self.parseSequence()
         self.parsePDB()
         self.parseMIM()
@@ -274,7 +275,16 @@ class Entry(pyproteins.container.Core.Container):
     def parseSequence(self):
         self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
     #    pass
-
+    
+    def parseEnsembl(self):
+        #Search for Ensembl id : ENSGXXXXXXXXXXX
+        Ensembl_id = []
+        for e in self.xmlHandler.find_all("dbReference", type="Ensembl"):
+            for e_gene_id in e.find_all('property',type='gene ID'):
+                if e_gene_id["value"] not in Ensembl_id:
+                    Ensembl_id.append(e_gene_id["value"])
+        return Ensembl_id
+    
     def get_xref(self):
         # print("GET XREF")
         dic_xref = {'EMBL': {}, 'RefSeq': {}}
