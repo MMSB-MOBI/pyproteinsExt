@@ -69,10 +69,8 @@ def proxySetting(**param):
     pyproteins.container.Core.proxySetting(param)
 
 '''
-
     TODO Isoform, minimal -> affects the fasta sequence
                  Need to check isoform data xml structure, sequence variant specs of Uniprot
-
 '''
 
 
@@ -157,6 +155,8 @@ class Entry(pyproteins.container.Core.Container):
         #    self.parseDomain()
         #self.parseDomain()
         self.parseSse()
+        self.Ensembl = self.parseEnsembl()
+        self.GeneID = self.parseGeneID()
         self.parseSequence()
         self.parsePDB()
         self.parseMIM()
@@ -274,7 +274,23 @@ class Entry(pyproteins.container.Core.Container):
     def parseSequence(self):
         self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
     #    pass
-
+    
+    def parseEnsembl(self):
+        #Search for Ensembl id : ENSGXXXXXXXXXXX
+        Ensembl_id = []
+        for e in self.xmlHandler.find_all("dbReference", type="Ensembl"):
+            for e_gene_id in e.find_all('property',type='gene ID'):
+                if e_gene_id["value"] not in Ensembl_id:
+                    Ensembl_id.append(e_gene_id["value"])
+        return Ensembl_id
+        
+    def parseGeneID(self):
+        GeneID= []
+        for e_gene_id in self.xmlHandler.find_all("dbReference", type="GeneID"):
+            if e_gene_id["id"] not in GeneID:
+                GeneID.append(e_gene_id["id"])
+        return GeneID
+        
     def get_xref(self):
         # print("GET XREF")
         dic_xref = {'EMBL': {}, 'RefSeq': {}}
@@ -611,5 +627,3 @@ class Genome():
                 self.RefSeqProteinRef.append(e['id'])
                 for e_prot_id in e.find_all('property',type='nucleotide sequence ID'):
                     self.RefSeqRef.append(e_prot_id['value'])
-
-
