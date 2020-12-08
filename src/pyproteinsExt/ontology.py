@@ -23,12 +23,16 @@ def isOboNamespaced(term):
 
 
 class Ontology():
-    def __init__(self, file=None, oType='GO'):
+    def __init__(self, file=None, url=None, oType='GO'):
         self.type =oType
         # super(Ontology, self).__init__(ressource)
-        if file:
+        if not file is None :
             self.onto = get_ontology("file://" + file).load()
-
+        elif not url is None:
+            self.onto = get_ontology(url).load()
+        else:
+            raise IOError("No ontology source specifed!")
+    
     # find terms based on namespaced Id or text description in label
     def find(self, stringTerm):
         if isOboNamespaced(stringTerm):

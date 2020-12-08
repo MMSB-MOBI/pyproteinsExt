@@ -1,11 +1,14 @@
 #import urllib2
 from urllib.request import urlopen
-from bs4 import BeautifulSoup
 import re
 import pyproteins.container.customCollection
 import pyproteins.container.Core
 import pyproteinsExt.pfam as pfam
 import json
+
+
+from xml.etree.ElementTree import parse, dump, fromstring, register_namespace, ElementTree, tostring
+
 
 from os.path import expanduser
 
@@ -103,22 +106,53 @@ class fetchEntries():
         for entry in self.entrySet:
             yield entry
 
-
-
 ''' Collection of uniprot entries
 customary cache location is "/Users/guillaumelaunay/work/data/uniprot"
 '''
 class EntrySet(pyproteins.container.customCollection.EntrySet):
     def __init__(self, **kwargs):
+        self.ns = '{http://uniprot.org/uniprot}'
+
         home = expanduser("~")
         cachePath = home     
-      #  if 'collectionPath' in kwargs:
-      #      cachePath = kwargs['collectionPath']
-      #  if 'pfamCollectionPath' in kwargs:
-      #      PfamCache = kwargs['pfamCollectionPath']
+        self.isXMLCollection = False
+        if 'collectionXML' in kwargs:
+            self.isXMLCollection = True
+            self.etree = parse(kwargs['collectionXML'])
+            self.etree_root = self.etree.getroot()
+                    
+            print(f"==> {type(self.etree_root)} {type(self.etree)} <==")
+
 
         super().__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
 
+    def keys(self):
+        """ Returns uniprot identifiers within collection as a generator """
+        if self.isXMLCollection:
+            for entry in self.etree_root.findall(f"{self.ns}entry"):
+                uniprotID = entry.find(f"{self.ns}accession").text
+                yield(uniprotID)
+        else :
+            return super().keys()
+        
+    def __iter__(self):
+        if self.isXMLCollection:
+            for entry in self.etree_root.findall(f"{self.ns}entry"):
+                uniprotID = entry.find(f"{self.ns}accession").text
+                yield Entry(uniprotID, xmlEtreeHandler = entry, xmlNS = self.ns)
+
+    def get(self, uniprotID):
+        if self.isXMLCollection:
+            for entry in self.etree_root.findall(f"{self.ns}entry"):
+                for acc in entry.findall(f"{self.ns}accession"):
+                    if acc.text == uniprotID: # entry is the node matching provided UNIPROT accessor
+                        return Entry(uniprotID, xmlEtreeHandler = entry, xmlNS = self.ns)
+            return None
+        else :
+            print(f"Looking in XML files/dir collection for {uniprotID}")
+            return super().get(uniprotID, xmlNS = self.ns)
+        
+        
     def serialize(self, ext=''):
         global PfamCache
         print ("serializing uniprot collection")
@@ -128,32 +162,100 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
             getPfamCollection().serialize(ext=ext)
 
 class Entry(pyproteins.container.Core.Container):
-    def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fetchable= True, fileName=None):
+    ## Wrap and split kwargs
+    # Re-encode etree xpath like search 
+    # https://docs.python.org/3/library/xml.etree.elementtree.html#example
+    # //div[@id='..' and @class='...]
+
+    def __repr__(self):
+        asStr = f"{self.id}:{self.AC}\n" 
+        asStr += f"{self.name}:{self.fullName}({self.geneName})\n"
+        
+        if self.STRING_ID:
+            asStr += f"STRING_ID:{self.STRING_ID}\n"
+        
+        asStr += f"taxid:{self.taxid}:{self.lineage}\n"
+        asStr += f"KW:{self.KW}\n"
+        asStr += f"GO:{self.GO}\n"
+        
+        return asStr
+
+    def _buildXpath(self, xpath, **kwargs):
+        
+        _xpath_ = xpath.replace("/",f"/{self._ns}")
+        _xpath_ += ' and '.join( [ f"[@{k}='{v}']" for k,v in kwargs.items() ] )
+
+        if not ( _xpath_.startswith('/') or _xpath_.startswith('./') ) :
+            _xpath_ = f"{self._ns}{_xpath_}"
+
+        #print(f"building xpath from {xpath} to {_xpath_}")
+        return _xpath_
+
+    def _xmlAttrib(self, key, elem=None):
+        if elem is None:
+            elem = self.xmlHandler
+        return elem.attrib[key]
+
+    def _xmlFind(self, tag, elem=None, **kwargs):
+        if elem is None:
+            elem = self.xmlHandler
+        if len(kwargs.keys()) > 1:
+            raise(f"Asking for Too many attributes ({len(kwargs.keys())}) in tag xpath search")
+
+        xpathStr = self._buildXpath(tag, **kwargs) 
+        return elem.find(xpathStr)
+        
+    def _xmlFindAll(self, tag, elem=None, **kwargs):
+        if elem is None:
+            elem = self.xmlHandler
+        
+        xpath = self._buildXpath(tag, **kwargs) 
+        return elem.findall(xpath)
+
+    def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fetchable= True, fileName=None, xmlEtreeHandler=None, xmlNS=None):
         if not id:
             raise TypeError('identifier is empty')
 
-        #c_id = capture(id)
-        #if not c_id:
-        #    raise ValueError('could not extract uniprot identifier from provided id parameter ' + id)
         super().__init__(id, url=baseUrl + str(id) + '.xml', fileName=fileName)
         #pyproteins.container.Core.Container.__init__(self, id, url=baseUrl + str(id) + '.xml', fileName=fileName)
+        
+        if not xmlNS is None:
+             self._ns = xmlNS
 
-        #print id + '-->' + str(fileName)
+        if not xmlEtreeHandler is None:
+            self.xmlHandler = xmlEtreeHandler
+        else:
+            self.xmlHandler = self.getXmlHandler(fetchable=fetchable).find(f"{xmlNS}entry")
+        
+ 
 
-        self.xmlHandler = self.getXmlHandler(fetchable=fetchable)
-        if not self.xmlHandler:
+        if self.xmlHandler is None:
             return None
+        
+        self.name = self._xmlFind("./name").text
+        
+        self.fullName = self._xmlFind("./protein/recommendedName/fullName").text
+        self.geneName =  None
+        e = self._xmlFind("gene")
+        if not e is None:
+           self.geneName = self._xmlFind("./name", elem=e).text
 
-        self.name = self.xmlHandler.find('name').text
-        self.fullName = self.xmlHandler.find('fullName').text
-        self.geneName = self.xmlHandler.find('gene').find('name').text if self.xmlHandler.find('gene') else None
+        self.STRING_ID = None
+        e = self._xmlFind("./dbReference", type="STRING")
+        if not e is None:
+            self.STRING_ID = self._xmlAttrib('id', elem=e)
+
+        self.parseAC()
+        self.parseLineage()
         self.parseKW()
         self.parseGO()
-        self.parseLineage()
-        self.parseAC()
-        #if PfamCache:
-        #    self.parseDomain()
-        #self.parseDomain()
+
+
+# Following oarsing stages are disabled since we got rid of bs4
+# Need to port them  to lxml, making use of xpath syntax
+    def PARSER_TO_PORT_TO_ETREE(self):
+
+       
         self.parseSse()
         self.Ensembl = self.parseEnsembl()
         self.GeneID = self.parseGeneID()
@@ -203,11 +305,13 @@ class Entry(pyproteins.container.Core.Container):
         return container
 
     def parseAC(self):
-        self.AC = [e.text for e in self.xmlHandler.find_all('accession')]
-
+        self.AC = [ e.text for e in  self._xmlFindAll("./accession") ]
+          
     def parseLineage(self):
-        self.lineage = [ e.text for e in self.xmlHandler.find('lineage').find_all('taxon')]
-        self.taxid = self.xmlHandler.find('organism').find_all('dbReference', type='NCBI Taxonomy')[0]['id']
+        self.lineage = [ e.text for e in  self._xmlFindAll("./organism/lineage/taxon") ]
+        e = self._xmlFind('organism/dbReference', type='NCBI Taxonomy')
+        self.taxid = self._xmlAttrib('id', elem=e)
+    
     def parseMIM(self):
         self.MIM = []
         for e in self.xmlHandler.find_all("dbReference", type="MIM"):
@@ -221,9 +325,13 @@ class Entry(pyproteins.container.Core.Container):
 
     def parseGO(self):
         self.GO = []
-        for e in self.xmlHandler.find_all("dbReference", type="GO"):
-            self.GO.append(GoKW(e))
-
+        for e in self._xmlFindAll("dbReference", type="GO"):
+            self.GO.append(GoKW(
+                self._xmlAttrib('id', elem=e),
+                self._xmlAttrib('value', elem = self._xmlFind("property", elem=e, type="term") ),
+                self._xmlAttrib('value', elem = self._xmlFind("property", elem=e, type="evidence") )
+            ))
+        
     def parseORPHA(self):
         self.ORPHA = []
         for e in self.xmlHandler.find_all("dbReference", type="Orphanet"):
@@ -268,8 +376,9 @@ class Entry(pyproteins.container.Core.Container):
 
     def parseKW(self):
         self.KW = []
-        for e in self.xmlHandler.find_all("keyword"):
-            self.KW.append(UniprotKW(e))
+        
+        for e in self._xmlFindAll("./keyword"):
+            self.KW.append( UniprotKW(self._xmlAttrib('id', elem=e), e.text) ) 
 
     def parseSequence(self):
         self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
@@ -529,10 +638,10 @@ class annotTerm:
         return hash(self) == hash(other)
 
 class GoKW(annotTerm):
-    def __init__(self, e):
-        self.id = e['id']
-        self.term = e.find('property', type='term')['value']
-        self.evidence = e.find('property',type='evidence')['value']
+    def __init__(self, id,term, evidence):
+        self.id = id
+        self.term = term
+        self.evidence = evidence
     def __repr__(self):
         return self.id + ":" + self.term + "{" + self.evidence + "}"
 
@@ -586,9 +695,9 @@ class PDBref():
         return string
 
 class UniprotKW():
-    def __init__(self, e):
-        self.id = e['id']
-        self.term = e.text
+    def __init__(self, id, text):
+        self.id = id
+        self.term = text
     def __repr__(self):
         return self.id + ":" + self.term     
 
