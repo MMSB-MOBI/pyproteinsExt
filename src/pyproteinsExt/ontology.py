@@ -23,11 +23,11 @@ def isOboNamespaced(term):
 
 
 class Ontology():
-    def __init__(self, file=None, url=None, oType='GO'):
+    def __init__(self, owlFile=None, url=None, oType='GO'):
         self.type =oType
         # super(Ontology, self).__init__(ressource)
-        if not file is None :
-            self.onto = get_ontology("file://" + file).load()
+        if not owlFile is None :
+            self.onto = get_ontology("file://" + owlFile).load()
         elif not url is None:
             self.onto = get_ontology(url).load()
         else:

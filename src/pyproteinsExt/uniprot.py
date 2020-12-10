@@ -120,7 +120,7 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
             self.isXMLCollection = True
             self.etree = parse(kwargs['collectionXML'])
             self.etree_root = self.etree.getroot()
-                    
+            self.index = None
             print(f"==> {type(self.etree_root)} {type(self.etree)} <==")
 
 
@@ -130,11 +130,21 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         """ Returns uniprot identifiers within collection as a generator """
         if self.isXMLCollection:
             for entry in self.etree_root.findall(f"{self.ns}entry"):
-                uniprotID = entry.find(f"{self.ns}accession").text
-                yield(uniprotID)
+                for alt_acc in entry.findall(f"{self.ns}accession"):
+                    yield(alt_acc.text)
         else :
             return super().keys()
-        
+    
+    def has(self, id):
+        if self.isXMLCollection:
+            if self.index is None:
+                self.index = {}
+                for acc in self.keys():
+                    self.index[acc] = True
+            return id in self.index
+        else :
+            return super().has()
+
     def __iter__(self):
         if self.isXMLCollection:
             for entry in self.etree_root.findall(f"{self.ns}entry"):
@@ -234,7 +244,11 @@ class Entry(pyproteins.container.Core.Container):
         
         self.name = self._xmlFind("./name").text
         
-        self.fullName = self._xmlFind("./protein/recommendedName/fullName").text
+        if not self._xmlFind("./protein/recommendedName/fullName") is None:
+            self.fullName = self._xmlFind("./protein/recommendedName/fullName").text
+        else:
+            self.fullName = self.name
+        
         self.geneName =  None
         e = self._xmlFind("gene")
         if not e is None:
