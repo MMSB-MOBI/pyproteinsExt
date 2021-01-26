@@ -6,6 +6,7 @@ import pyproteins.container.Core
 import pyproteinsExt.pfam as pfam
 import json
 
+import gzip
 
 from xml.etree.ElementTree import parse, dump, fromstring, register_namespace, ElementTree, tostring
 
@@ -118,13 +119,26 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         self.isXMLCollection = False
         if 'collectionXML' in kwargs:
             self.isXMLCollection = True
-            self.etree = parse(kwargs['collectionXML'])
+            if kwargs['collectionXML'].endswith('.gz'):
+                with gzip.open(kwargs['collectionXML'], 'r') as gz:
+                    self.etree = parse(gz)
+            else:
+                self.etree = parse(kwargs['collectionXML'])
+
             self.etree_root = self.etree.getroot()
             self.index = None
             print(f"==> {type(self.etree_root)} {type(self.etree)} <==")
 
 
         super().__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
+        if 'collectionXML' in kwargs:
+            print (f"Acknowledged {len(self)} entries {kwargs['collectionXML']}")
+
+
+    def __len__(self):
+        if self.isXMLCollection:
+            return len(list([ _ for _ in self ]))
+        return super().__len__()
 
     def keys(self):
         """ Returns uniprot identifiers within collection as a generator """
@@ -170,6 +184,13 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         if PfamCache:
             print ("serializing pfam collection")
             getPfamCollection().serialize(ext=ext)
+    
+    @property
+    def taxids(self):
+        taxids = set()
+        for e in self:
+            taxids.add(e.taxid)
+        return list(taxids)
 
 class Entry(pyproteins.container.Core.Container):
     ## Wrap and split kwargs
@@ -258,7 +279,7 @@ class Entry(pyproteins.container.Core.Container):
         e = self._xmlFind("./dbReference", type="STRING")
         if not e is None:
             self.STRING_ID = self._xmlAttrib('id', elem=e)
-
+        
         self.parseAC()
         self.parseLineage()
         self.parseKW()
@@ -454,7 +475,11 @@ class Entry(pyproteins.container.Core.Container):
         if keyword.upper() in (kw.id.upper() for kw in self.KW):
             return True
         return False
-
+    
+    @property
+    def isGOannot(self):
+        return not len(self.GO) == 0
+        
     def hasGO(self, keyword):
         if keyword.upper() in (kw.id.upper() for kw in self.GO):
             return True

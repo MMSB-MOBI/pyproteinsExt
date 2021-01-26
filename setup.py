@@ -21,8 +21,9 @@ setup(
   author = 'Guillaume Launay, Juliette Martin et al',
   author_email = 'pitooon@gmail.com, juliette.martin@ibcp.fr',
   url = 'https://github.com/MMSB-MOBI/pyproteinsExt', # use the URL to the github repo
-  packages=find_packages('src'),
   package_dir={'': 'src'},
+  #packages=find_packages('src'),
+  packages=['pyproteinsExt'],
   include_package_data=True,
   zip_safe=False,
   py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
