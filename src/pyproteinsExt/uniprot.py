@@ -165,8 +165,12 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
                 uniprotID = entry.find(f"{self.ns}accession").text
                 yield Entry(uniprotID, xmlEtreeHandler = entry, xmlNS = self.ns)
 
-    def get(self, uniprotID):
-        if self.isXMLCollection:
+    def get(self, uniprotID, force_fetch=False):
+        if force_fetch:
+            print(f"Looking in XML files/dir collection for {uniprotID}")
+            return super().get(uniprotID, xmlNS = self.ns)
+
+        elif self.isXMLCollection:
             for entry in self.etree_root.findall(f"{self.ns}entry"):
                 for acc in entry.findall(f"{self.ns}accession"):
                     if acc.text == uniprotID: # entry is the node matching provided UNIPROT accessor
@@ -184,6 +188,17 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         if PfamCache:
             print ("serializing pfam collection")
             getPfamCollection().serialize(ext=ext)
+
+    def add_to_proteome(self, entry):
+        #TO DO : type check if entry is Entry
+        
+        print(f"Add {entry.id} in xml proteome")
+        self.etree_root.append(entry.xmlHandler)
+
+    def serialize_proteome(self, out_xml):
+        print(f"Serialize proteome with {len(self)} entries")
+        self.etree.write(out_xml)
+
     
     @property
     def taxids(self):
