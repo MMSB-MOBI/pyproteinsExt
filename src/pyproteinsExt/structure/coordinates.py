@@ -75,7 +75,7 @@ class Parser(object):
 	def __init__(self):
 		pass
 
-	def load(self, **kwargs):
+	def load(self, heteroatoms = False, **kwargs):
 		structureObj = Structure();
 
 		def _read(stream):
@@ -83,9 +83,9 @@ class Parser(object):
 			newModel = False
 			for l in stream:
 				#print ">>" + l + "<<"
-				if l.startswith("ATOM "):
+				if l.startswith("ATOM ") or (heteroatoms and l.startswith("HETATM")):
 					if newModel:
-						currentAtomList = structureObj.pop();
+						currentAtomList = structureObj.pop()
 						newModel = False
 					currentAtomList.append(Atom(string=l))
 				elif l.startswith("ENDMDL"):
@@ -385,6 +385,11 @@ class Structure(object):
 	def atomRecord(self):
 		for atom in self.model[self.currModel - 1]:
 			yield atom
+
+	def atomFromResname(self, resname):
+		for atom in self.model[self.currModel - 1]:
+			if atom.resName == resname:
+				yield atom
 
 	@property
 	def chainList(self):
