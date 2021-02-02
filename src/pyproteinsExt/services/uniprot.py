@@ -17,6 +17,9 @@ def startup(xmlUniprot):
     
     app.add_url_rule( '/uniprots', 'getProteins', getProteins,
                       methods = ['POST'] )
+
+    app.add_url_rule( '/length', 'length', length,
+                      methods = ['GET'] ) 
     
     #app.add_url_rule('/unigo/<taxid>', 'view_unigo', view_unigo)
     
@@ -26,6 +29,12 @@ def load(xmlFile):
     global UNIPROT_COLLECTION
     UNIPROT_COLLECTION = pExt.EntrySet(collectionXML=xmlFile)
     print(f"Loaded uniprot collection from {xmlFile} elements")
+
+def length():
+    global UNIPROT_COLLECTION
+    length = len(UNIPROT_COLLECTION)
+    print(f"Current Collection size ${length}")
+    return jsonify( {"totalEntry" : length } )
 
 def getProtein(uniprotID):
     print(f"Seeking {uniprotID}")
@@ -44,11 +53,12 @@ def getProteins():
         abort(422)
     
     results = {}
+    validCnt = 0
     for id in data['uniprotIDs']:
         _ = UNIPROT_COLLECTION.get(id)
         results[id] = _.toJSON() if not _ is None else None
-    
-    print(f"Returning {results}")
+        validCnt = validCnt + 1 if results[id] else validCnt
+    print(f"Returning { validCnt } valid elements")
     return jsonify(results)
 
 def model():
