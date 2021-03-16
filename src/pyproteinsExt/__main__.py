@@ -1,11 +1,14 @@
 """Go ontology tree manipulation tool and microservice
+
 Usage:
-    pyproteinsExt service uniprot <xmlProteomeFile> [--silent] [--port]
+    pyproteinsExt service uniprot <xmlProteomeFile> [--silent] [--port=<portNumber>]
 
 Options:
   -h --help     Show this screen.
   <xmlProteomeFile> uniprot file location in xml format
+  --port=<portNumber> port for public API
   --silent  verbosity
+  
 """
 import os
 

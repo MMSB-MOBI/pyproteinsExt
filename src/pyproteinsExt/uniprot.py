@@ -337,6 +337,8 @@ class Entry(pyproteins.container.Core.Container):
                 container[k] = v
             if k == 'fullName':
                 container[k] = v
+            if k == 'taxid':
+                container[k] = v
         return container
 
     def parseAC(self):
