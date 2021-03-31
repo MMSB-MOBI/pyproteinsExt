@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, abort, request, jsonify
 from pyproteinsExt import uniprot as pExt
+import uuid
 
 UNIPROT_COLLECTION=None
+START_UUID = uuid.uuid1()
 
 def startup(xmlUniprot):
     print("Loading")
@@ -20,6 +22,8 @@ def startup(xmlUniprot):
 
     app.add_url_rule( '/length', 'length', length,
                       methods = ['GET'] ) 
+
+    app.add_url_rule('/version', 'version', get_version)
     
     #app.add_url_rule('/unigo/<taxid>', 'view_unigo', view_unigo)
     
@@ -64,3 +68,6 @@ def getProteins():
 def model():
     #pyproteinsExt.model()
     return "Hello world"
+
+def get_version():
+    return jsonify( {"version" : str(START_UUID) } )
