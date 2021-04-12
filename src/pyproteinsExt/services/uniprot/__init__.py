@@ -1,12 +1,34 @@
 from flask import Flask, jsonify, abort, request, jsonify
 from pyproteinsExt import uniprot as pExt
+from . import collectionProxy as redisCollection
 
 UNIPROT_COLLECTION=None
 
-def startup(xmlUniprot):
-    print("Loading")
+def cleanup(rh=None, rp=None):
+    redisCollection.bootstrap(host=rh, port=rp)
+    redisCollection.cleanup()
 
-    load(xmlUniprot)
+def startup(xmlUniprot, redis=False, rh=None, rp=None):
+
+    global UNIPROT_COLLECTION
+   # UNIPROT_COLLECTION = pExt.EntrySet(collectionXML=xmlUniprot)
+   
+    if xmlUniprot:
+        print(f"Loadind XML ressource {xmlUniprot}")
+        _ = pExt.EntrySet(collectionXML=xmlUniprot)
+        print(f"Loaded uniprot collection from {xmlUniprot} elements")
+
+    if redis:
+        redisCollection.bootstrap(host=rh, port=rp)
+        
+        if xmlUniprot:
+            redisCollection.convert(_)
+        UNIPROT_COLLECTION = redisCollection
+    if not xmlUniprot:
+        print("No data added to uniprot storage service")
+
+    
+    print("Uniprot storage service listening")
  
     app = Flask(__name__)
 
@@ -24,11 +46,6 @@ def startup(xmlUniprot):
     #app.add_url_rule('/unigo/<taxid>', 'view_unigo', view_unigo)
     
     return app
-
-def load(xmlFile):
-    global UNIPROT_COLLECTION
-    UNIPROT_COLLECTION = pExt.EntrySet(collectionXML=xmlFile)
-    print(f"Loaded uniprot collection from {xmlFile} elements")
 
 def length():
     global UNIPROT_COLLECTION

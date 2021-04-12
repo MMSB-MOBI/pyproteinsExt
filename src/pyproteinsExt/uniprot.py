@@ -1,4 +1,3 @@
-#import urllib2
 from urllib.request import urlopen
 import re
 import pyproteins.container.customCollection
@@ -111,12 +110,14 @@ class fetchEntries():
 customary cache location is "/Users/guillaumelaunay/work/data/uniprot"
 '''
 class EntrySet(pyproteins.container.customCollection.EntrySet):
+
     def __init__(self, **kwargs):
         self.ns = '{http://uniprot.org/uniprot}'
 
         home = expanduser("~")
         cachePath = home     
         self.isXMLCollection = False
+        self.isRedisCollection = False
         if 'collectionXML' in kwargs:
             self.isXMLCollection = True
             if kwargs['collectionXML'].endswith('.gz'):
@@ -128,13 +129,11 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
             self.etree_root = self.etree.getroot()
             self.index = None
             print(f"==> {type(self.etree_root)} {type(self.etree)} <==")
-
-
+        
         super().__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
         if 'collectionXML' in kwargs:
             print (f"Acknowledged {len(self)} entries {kwargs['collectionXML']}")
-
-
+      
     def __len__(self):
         if self.isXMLCollection:
             return len(list([ _ for _ in self ]))
