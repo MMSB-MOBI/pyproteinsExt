@@ -128,7 +128,7 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
 
             self.etree_root = self.etree.getroot()
             self.index = None
-            print(f"==> {type(self.etree_root)} {type(self.etree)} <==")
+          #  print(f"==> {type(self.etree_root)} {type(self.etree)} <==")
         
         super().__init__(collectionPath=cachePath, constructor=Entry, typeCheck=isValidID, indexer=strip)
         if 'collectionXML' in kwargs:

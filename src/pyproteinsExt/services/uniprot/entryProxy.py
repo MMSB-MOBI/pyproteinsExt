@@ -14,13 +14,12 @@ class EntrySchema(Schema):
     #    unknown = INCLUDE
     name = fields.Str()
     id   = fields.Str(validate=isValidID)
-    geneName = fields.Str()
+    geneName = fields.Str(allow_none=True)
     fullName = fields.Str()
     taxid    = fields.Str() # Int ?
     GO = fields.List(fields.Nested(GoTermSchema))
     @post_load
     def make_uniprotEntryProxy(self, data, **kwargs):
-        print(f"??{data}")
         return ProxyEntry(**data)
 
 
