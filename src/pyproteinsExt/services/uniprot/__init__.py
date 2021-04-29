@@ -20,18 +20,14 @@ def startup(xmlUniprot, redis=False, rh=None, rp=None):
     if xmlUniprot:
         print(f"Loading XML ressource {xmlUniprot} ...")
         _ = pExt.EntrySet(collectionXML=xmlUniprot)
-        
+        UNIPROT_COLLECTION = _    
     if redis:
         REDIS=True
-        redisCollection.bootstrap(host=rh, port=rp)
-        
+        redisCollection.bootstrap(host=rh, port=rp)        
         if xmlUniprot:
             redisCollection.convert(_)
         UNIPROT_COLLECTION = redisCollection
-    if not xmlUniprot:
-        print("No data added to uniprot storage service")
-
-    
+        
     print("Uniprot storage service listening")
  
     app = Flask(__name__)
@@ -76,7 +72,10 @@ def listProtein(interval=':1000'):
 
 def length():
     global UNIPROT_COLLECTION
-    length = len(UNIPROT_COLLECTION)
+    if REDIS:
+        length = UNIPROT_COLLECTION.length()
+    else:
+        length = len(UNIPROT_COLLECTION)
     print(f"Current Collection size ${length}")
     return jsonify( {"totalEntry" : length} )
 
@@ -106,9 +105,9 @@ def getProteins():
             validCnt = validCnt + 1 if results[id] else validCnt
     else:
         print("Fetching many via redis")
-        results = UNIPROT_COLLECTION.mget(data['uniprotIDs'], raw=True)
-        print(results)
-
+        for e in UNIPROT_COLLECTION.mget(data['uniprotIDs'], raw=False):
+            results[e.id] = e.toJSON() if not e is None else None
+            validCnt = validCnt + 1 if results[e.id] else validCnt
 
     print(f"Returning { validCnt } valid elements")
     return jsonify(results)

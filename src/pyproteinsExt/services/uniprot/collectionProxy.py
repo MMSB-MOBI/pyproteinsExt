@@ -101,6 +101,7 @@ def mget(uniprotIDs, raw=False):
     _ =  mgetUniProtEntry(uniprotIDs, raw=raw)
     return _
 
+# Not sure its possible at module level
 def __iter__():
     chunckSize = 250
     _ = []
@@ -117,9 +118,18 @@ def __iter__():
             yield e 
     print(f"Completed total {cnt} iterations")
 
+# Not possible at module level
+# TypeError: object of type 'module' has no len()
 def __len__():
     cnt = 0
     for _id in listUniprotKey(): 
         cnt += 1
     return cnt
+
+def length():
+    cnt = 0
+    for _id in listUniprotKey(): 
+        cnt += 1
+    return cnt
+
 
