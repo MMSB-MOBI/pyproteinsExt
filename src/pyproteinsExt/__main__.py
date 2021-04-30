@@ -1,12 +1,15 @@
-"""Go ontology tree manipulation tool and microservice
+"""Uniprot ressources microservice
 
 Usage:
-    pyproteinsExt service uniprot <xmlProteomeFile> [--silent] [--port=<portNumber>]
-
+  pyproteinsExt service uniprot redis start [<xmlProteomeFile>] [--rh=<redis_host> --rp=<redis_port>] [--silent] [--port=<portNumber>]
+  pyproteinsExt service uniprot redis wipe [--rh=<redis_host> --rp=<redis_port>]
+  pyproteinsExt service uniprot xml start <xmlProteomeFile> [--silent] [--port=<portNumber>]
+    
 Options:
   -h --help     Show this screen.
-  <xmlProteomeFile> uniprot file location in xml format
-  --port=<portNumber> port for public API
+  --port=<portNumber>  port for public API [default: 2332]
+  --rp=<redis_port>  redis DB TCP port [default: 6379]
+  --rh=<redis_host>  redis DB http adress [default: localhost]
   --silent  verbosity
   
 """
@@ -19,9 +22,12 @@ from .services import uniprot as uniprotService
 arguments = docopt(__doc__)
 print(arguments)
 
-proteomeXML = arguments['<xmlProteomeFile>'] if arguments['<xmlProteomeFile>'] else None
-apiPort = arguments['--port']     if arguments['--port'] else 5000
+if arguments['wipe']:
+  uniprotService.cleanup(rh=arguments['--rh'], rp=arguments['--rp'])
+  exit(1)
 
-if arguments['service'] and arguments['uniprot']:
-    app = uniprotService.startup(proteomeXML)
-    app.run(debug=False, port=apiPort)
+app = uniprotService.startup(arguments['<xmlProteomeFile>'],\
+    redis=arguments['redis'],\
+    rh=arguments['--rh'], rp=arguments['--rp'])
+
+app.run(debug=False, port=arguments['--port'])
