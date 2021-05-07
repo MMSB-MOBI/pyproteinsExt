@@ -10,20 +10,18 @@ from os.path import dirname
 from os.path import join
 from os.path import splitext
 
-from setuptools import find_packages
+from setuptools import find_packages, find_namespace_packages
 from setuptools import setup
 
 setup(
   name = 'pyproteinsExt',
-  version = '1.8',
+  version = '2.2',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
   author = 'Guillaume Launay, Juliette Martin et al',
   author_email = 'pitooon@gmail.com, juliette.martin@ibcp.fr',
   url = 'https://github.com/MMSB-MOBI/pyproteinsExt', # use the URL to the github repo
   package_dir={'': 'src'},
-  #packages=find_packages('src'),
-  packages=['pyproteinsExt'],
   include_package_data=True,
   zip_safe=False,
   py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
@@ -36,6 +34,14 @@ setup(
    package_data = {
    'pyproteinsExt': ['external/submitPsipred.sh','static/psicquicRegistryDefault.xml']
    },
+    packages = find_namespace_packages(
+        where = 'src',
+        include = ['pyproteinsExt', 'pyproteinsExt.database',\
+          'pyproteinsExt.services','pyproteinsExt.services.uniprot'
+          ]#,
+        #exclude = ['additional',]
+    ),
+
   #data_files=[
   #          ('external', ['external/pathos.tar.bz']),
   #          ('bin', ['bin/module1.py']),
