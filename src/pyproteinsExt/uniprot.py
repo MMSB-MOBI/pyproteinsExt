@@ -684,6 +684,20 @@ class GoKW(annotTerm):
         self.evidence = evidence
     def __repr__(self):
         return self.id + ":" + self.term + "{" + self.evidence + "}"
+    
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__ (self, other):
+        return self.id == other.id
+    
+    @property   
+    def asDict(self):
+        return {
+            "id" : self.id,
+            "term" : self.term,
+            "evidence" : self.evidence
+        }
 
 class MimKW(annotTerm):
     def __init__(self, e):

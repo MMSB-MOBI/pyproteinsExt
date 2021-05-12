@@ -1,0 +1,9 @@
+pyproteins
+networkx
+bs4
+biopython
+flask
+pyrediscore
+marshmallow
+progressbar
+doctopt
