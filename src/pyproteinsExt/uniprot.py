@@ -283,6 +283,7 @@ class Entry(pyproteins.container.Core.Container):
         self.parseLineage()
         self.parseKW()
         self.parseGO()
+        self.parseSequence()
 
 
 # Following oarsing stages are disabled since we got rid of bs4
@@ -417,7 +418,8 @@ class Entry(pyproteins.container.Core.Container):
             self.KW.append( UniprotKW(self._xmlAttrib('id', elem=e), e.text) ) 
 
     def parseSequence(self):
-        self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
+        self.sequence = self._xmlFind("./sequence").text.replace("\n", "").replace(" ", "")
+        #self.sequence = Sequence(self.xmlHandler.find("sequence", {"length" : True}))
     #    pass
     
     def parseEnsembl(self):
@@ -594,7 +596,7 @@ class Sequence():
         if not e:
             raise ValueError("Cant parse sequence")
         self.string = e.text.replace("\n", "").replace(" ", "")
-        self.mass =e['mass']
+        self.mass =e._xmlAttrib('mass')
     def __len__(self):
         return len(self.string)
     def __getitem__(self, i):
