@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pyproteinsext"
+version = "3.0.0"
+description = "'Extending pyproteins for bioinformatics tools&services'"
+authors = ["glaunay <pitooon@gmail.com>"]
+license = "BSD"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pyproteins = "^1.5.1"
+networkx = "^2.6.3"
+biopython = "^1.79"
+bs4 = "^0.0.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
