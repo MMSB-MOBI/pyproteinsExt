@@ -1,6 +1,6 @@
-# pyproteinsExt
+# pyproteinsext
 
-[Documentation](https://cecilpert.github.io/my_pyproteinsExt/)
+[Documentation](https://cecilpert.github.io/my_pyproteinsext/)
 
 ## notebook test&examples
 
@@ -165,7 +165,7 @@ TO DO
 #### Load a PDB file
 
 ```python
-import pyproteinsExt.structure.coordinates as PDB
+import pyproteinsext.structure.coordinates as PDB
 parser = PDB.Parser()
 pdbObj = parser.load(file="./1syq.pdb")
 ```
@@ -205,7 +205,7 @@ In this illustration, PDB file is *2vkn*.
 
 ```python
 #parsing PDB
-import pyproteinsExt.structure.coordinates as PDB
+import pyproteinsext.structure.coordinates as PDB
 parser = PDB.Parser()
 pdbObj = parser.load(file="path/2ns7.pdb")
 pdbObj.SEQRES
@@ -222,7 +222,7 @@ AApdb = [(pep.threeToOne(aa.name), int(aa.num)) for aa in pdbObj.byres()]
 You can access the content of any uniprot element. Corresponding XML file we ll be download locally if needed in a user defined cache directory.
 
 ```python
-import pyproteinsExt.uniprot as uniprot
+import pyproteinsext.uniprot as uniprot
 uniprot.proxySetting(https="https://yourproxy:port", http="http://yourproxy:port")
 
 uColl = uniprot.getUniprotCollection()
@@ -263,7 +263,7 @@ MGWRAAGALLLALLLHGRLLAVTHGLRAYDGLSLPED...
 You can give one or several file to parse method. For each protein, an entry `hmmrObj` is created
 
 ```python
-import pyproteinsExt.hmmrContainer as hm
+import pyproteinsext.hmmrContainer as hm
 hmmrContainer = hm.parse('hmmsearch_A.out', 'hmmsearch_B.out')
 ```
 
@@ -300,7 +300,7 @@ HQANPGQFAMVWVPGVDEVPMSVLAIHGKSEAGVVIKKGGPVSTALWEKKVGDIFFVRGPYGH
 Container that store TMHMM results. You can only give one tmhmm result file to parse (for now).
 
 ```python
-import pyproteinsExt.tmhmmContainerFactory as tmhmm
+import pyproteinsext.tmhmmContainerFactory as tmhmm
 tmhmmContainer = tmhmm.parse('tmhmm.out')
 ```
 Container is a collection of TMHMM_Obj objects.
@@ -349,7 +349,7 @@ outside 153 155
 Descriptions of the Psicquic service and related MITAB format can be found [here](https://psicquic.github.io/)
 
 ```python
-import pyproteinsExt.psicquic as psq
+import pyproteinsext.psicquic as psq
 psqObj = psq.PSICQUIC(offLine=True)
 psqObj.read(mitabFile)
 psqAllInR6 = psqObj.filter(predicate=f)

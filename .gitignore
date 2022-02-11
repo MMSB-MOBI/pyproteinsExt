@@ -1,6 +1,6 @@
 dist/
 *.pyc
 ._*
-src/pyproteinsExt/.vscode
+src/pyproteinsext/.vscode
 .DS_store
 

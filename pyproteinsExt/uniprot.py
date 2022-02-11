@@ -2,7 +2,7 @@ from urllib.request import urlopen
 import re
 import pyproteins.container.customCollection
 import pyproteins.container.Core
-import pyproteinsExt.pfam as pfam
+import pyproteinsext.pfam as pfam
 import json
 
 import gzip

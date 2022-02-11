@@ -14,7 +14,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 setup(
-  name = 'pyproteinsExt',
+  name = 'pyproteinsext',
   version = '0.5',
   license='BSD',
   description = 'Extending pyproteins for bioinformatics tools&services',
@@ -33,7 +33,7 @@ setup(
           'pyproteins', 'networkx', 'bs4', 'biopython'
       ],
    package_data = {
-   'pyproteinsExt': ['external/submitPsipred.sh','static/psicquicRegistryDefault.xml']
+   'pyproteinsext': ['external/submitPsipred.sh','static/psicquicRegistryDefault.xml']
    },
   #data_files=[
   #          ('external', ['external/pathos.tar.bz']),

@@ -1,8 +1,8 @@
 import re
-import pyproteinsExt.uniprot
+import pyproteinsext.uniprot
 import copy
 import math
-import pyproteinsExt.matrisome
+import pyproteinsext.matrisome
 from queue import Queue
 from threading import Thread
 from collections import OrderedDict
@@ -131,7 +131,7 @@ class UniAno(object):
             if not id:
                 return False
             try :
-                notIsoform_id = pyproteinsExt.uniprot.strip(id)
+                notIsoform_id = pyproteinsext.uniprot.strip(id)
                 self._uniprotBound = uniprotEntrySet.get(notIsoform_id)#Uniprot.Entry(id)
             except TypeError as msg:
                 print ("Following element could not be bound to uniprot entity, reason " + str(msg))

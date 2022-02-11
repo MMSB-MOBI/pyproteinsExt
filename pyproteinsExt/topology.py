@@ -1,7 +1,7 @@
-import pyproteinsExt.hmmrContainerFactory as hmmr
-import pyproteinsExt.tmhmmContainerFactory as tmhmm
-import pyproteinsExt.fastaContainerFactory as fasta
-import pyproteinsExt.proteinContainer
+import pyproteinsext.hmmrContainerFactory as hmmr
+import pyproteinsext.tmhmmContainerFactory as tmhmm
+import pyproteinsext.fastaContainerFactory as fasta
+import pyproteinsext.proteinContainer
 from collections import OrderedDict
 from ete3 import NCBITaxa
 from statistics import mean
@@ -62,7 +62,7 @@ def _parseBuffer(dic_container):
     return dic_obj
 
 
-class TopologyContainer(pyproteinsExt.proteinContainer.Container):
+class TopologyContainer(pyproteinsext.proteinContainer.Container):
     def __init__(self, input=None, ete3_tree=None, domain_entries=None):
         super().__init__(_parseBuffer, input)
         self.ete3_tree = ete3_tree

@@ -1,9 +1,9 @@
 """Uniprot ressources microservice
 
 Usage:
-  pyproteinsExt service uniprot redis start [<xmlProteomeFile>] [--rh=<redis_host> --rp=<redis_port>] [--silent] [--port=<portNumber>]
-  pyproteinsExt service uniprot redis wipe [--rh=<redis_host> --rp=<redis_port>]
-  pyproteinsExt service uniprot xml start <xmlProteomeFile> [--silent] [--port=<portNumber>]
+  pyproteinsext service uniprot redis start [<xmlProteomeFile>] [--rh=<redis_host> --rp=<redis_port>] [--silent] [--port=<portNumber>]
+  pyproteinsext service uniprot redis wipe [--rh=<redis_host> --rp=<redis_port>]
+  pyproteinsext service uniprot xml start <xmlProteomeFile> [--silent] [--port=<portNumber>]
     
 Options:
   -h --help     Show this screen.

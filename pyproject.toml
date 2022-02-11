@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "pyproteinsext"
-version = "3.0.0"
+version = "3.0.3"
 description = "'Extending pyproteins for bioinformatics tools&services'"
 authors = ["glaunay <pitooon@gmail.com>"]
 license = "BSD"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pyproteins = "^1.5.1"
+pyproteins = "^2.0.0"
 networkx = "^2.6.3"
 biopython = "^1.79"
 bs4 = "^0.0.1"

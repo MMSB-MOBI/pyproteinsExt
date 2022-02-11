@@ -3,7 +3,7 @@
 from bs4 import BeautifulSoup
 import re
 import xml.etree.ElementTree as ET
-import pyproteinsExt.uniprot
+import pyproteinsext.uniprot
 import json
 import os
 import numpy as np
@@ -603,8 +603,8 @@ class PSQDATA():
         if key is "species":
             return (self.data[9].data[0].value, self.data[10].data[0].value)
         if key is 'uniprotPair':
-            a = pyproteinsExt.uniprot.capture(self.data[0].data[0].value) if pyproteinsExt.uniprot.capture(self.data[0].data[0].value) else pyproteinsExt.uniprot.capture(self.data[2].data[0].value)
-            b = pyproteinsExt.uniprot.capture(self.data[1].data[0].value) if pyproteinsExt.uniprot.capture(self.data[1].data[0].value) else pyproteinsExt.uniprot.capture(self.data[3].data[0].value)
+            a = pyproteinsext.uniprot.capture(self.data[0].data[0].value) if pyproteinsext.uniprot.capture(self.data[0].data[0].value) else pyproteinsext.uniprot.capture(self.data[2].data[0].value)
+            b = pyproteinsext.uniprot.capture(self.data[1].data[0].value) if pyproteinsext.uniprot.capture(self.data[1].data[0].value) else pyproteinsext.uniprot.capture(self.data[3].data[0].value)
             if a and b:
                 (a,b) = (b,a) if b < a else (a,b)
                 return (a, b)

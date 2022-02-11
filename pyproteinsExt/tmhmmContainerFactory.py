@@ -1,4 +1,4 @@
-import pyproteinsExt.proteinContainer
+import pyproteinsext.proteinContainer
 import re
 import gzip
 
@@ -57,7 +57,7 @@ def _parseBuffer(input):
     return {prot: obj}
 
 
-class Container(pyproteinsExt.proteinContainer.Container):
+class Container(pyproteinsext.proteinContainer.Container):
     """ Iterable container, that stores TMHMM_Obj objects """
     def __init__(self, input=None):
         super().__init__(_parseBuffer, input)

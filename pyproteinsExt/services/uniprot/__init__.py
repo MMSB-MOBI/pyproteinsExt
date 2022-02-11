@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, abort, request, jsonify
-from pyproteinsExt import uniprot as pExt
+from pyproteinsext import uniprot as pExt
 from . import collectionProxy as redisCollection
 import re
 
@@ -113,5 +113,5 @@ def getProteins():
     return jsonify(results)
 
 def model():
-    #pyproteinsExt.model()
+    #pyproteinsext.model()
     return "Hello world"

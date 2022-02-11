@@ -518,6 +518,6 @@ if __name__ == "__main__":
         #pClusterBuild(arguments['<location>'], number)
 
         '''
-python ~/work/DVL/python3/pyproteinsExt/src/pyproteinsExt/database/uniprotFastaFS.py ~/tmp/vTrembl --node '??'
+python ~/work/DVL/python3/pyproteinsext/src/pyproteinsext/database/uniprotFastaFS.py ~/tmp/vTrembl --node '??'
 
         '''
