@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, post_load, INCLUDE
-from ...uniprot import isValidID, GoKW# impoort unirpiotID validator
+from ....uniprot import isValidID, GoKW# impoort unirpiotID validator
 
 class GoTermSchema(Schema):
     id       = fields.Str()

@@ -4,7 +4,8 @@ Usage:
   pyproteinsext service uniprot redis start [<xmlProteomeFile>] [--rh=<redis_host> --rp=<redis_port>] [--silent] [--port=<portNumber>]
   pyproteinsext service uniprot redis wipe [--rh=<redis_host> --rp=<redis_port>]
   pyproteinsext service uniprot xml start <xmlProteomeFile> [--silent] [--port=<portNumber>]
-    
+  pyproteinsext service uniprot repl
+
 Options:
   -h --help     Show this screen.
   --port=<portNumber>  port for public API [default: 2332]
@@ -18,9 +19,14 @@ import os
 
 from docopt import docopt
 from .services import uniprot as uniprotService
-
+from .services.uniprot.client.repl import run_repl
 arguments = docopt(__doc__)
+
+if arguments['repl']:
+  run_repl()
+
 print(arguments)
+
 
 if arguments['wipe']:
   uniprotService.cleanup(rh=arguments['--rh'], rp=arguments['--rp'])

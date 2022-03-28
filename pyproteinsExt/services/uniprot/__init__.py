@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, abort, request, jsonify
+from flask import Flask, jsonify, abort, request, jsonify, make_response
 from pyproteinsext import uniprot as pExt
-from . import collectionProxy as redisCollection
+from .store import collectionProxy as redisCollection
+from .store.collectionProxy import InsertionError
 import re
 
 
@@ -32,7 +33,10 @@ def startup(xmlUniprot, redis=False, rh=None, rp=None):
  
     app = Flask(__name__)
 
-    app.add_url_rule('/model', 'model', model)
+    app.add_url_rule('/handshake', 'handshake', handshake)
+
+    app.add_url_rule('/model', 'model', model,
+                        methods = ['POST'] )
     
     app.add_url_rule( '/uniprot/<uniprotID>', 'getProtein', getProtein,
                       methods = ['GET'] ) 
@@ -45,9 +49,28 @@ def startup(xmlUniprot, redis=False, rh=None, rp=None):
     
     app.add_url_rule( '/uniprot/list', 'list', listProtein)
     app.add_url_rule( '/uniprot/list/<interval>', 'listProtein', listProtein)
-    #app.add_url_rule('/unigo/<taxid>', 'view_unigo', view_unigo)
     
+    app.add_url_rule('/uniprot/put', 'put', put,
+                        methods = ['POST'] )
+    #app.add_url_rule('/unigo/<taxid>', 'view_unigo', view_unigo)    
+
     return app
+
+def put():
+    global UNIPROT_COLLECTION
+   
+    if not request.is_json:
+        print("Post data not json")
+        abort(422)
+    print('OHOH')
+    data = request.get_json()
+    print(f"Adding stuff log {data}")    
+    try :
+        UNIPROT_COLLECTION.add(data)
+    except InsertionError as e:
+        return make_response(jsonify( { "error" : str(e)}) , 304)
+    
+    return jsonify({"success": data["id"]})
 
 def listProtein(interval=':1000'):
     def parseInterval(string): 
@@ -69,7 +92,6 @@ def listProtein(interval=':1000'):
     return jsonify( {"entryIDs" : listIDs} )
 
 
-
 def length():
     global UNIPROT_COLLECTION
     if REDIS:
@@ -83,7 +105,7 @@ def getProtein(uniprotID):
     print(f"Seeking {uniprotID}")
     oProtein = UNIPROT_COLLECTION.get(uniprotID)
     if not oProtein:
-        abort(404)
+        return make_response( jsonify( { uniprotID : "not found" }), 404 )
     return jsonify( { uniprotID : oProtein.toJSON() } )
 
 def getProteins():
@@ -115,3 +137,6 @@ def getProteins():
 def model():
     #pyproteinsext.model()
     return "Hello world"
+
+def handshake():
+    return 'hello'

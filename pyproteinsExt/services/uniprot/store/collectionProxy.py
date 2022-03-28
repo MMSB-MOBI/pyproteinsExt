@@ -3,6 +3,17 @@ from .redisClient import listUniprotKey, getUniProtEntry,\
     storeManyEntries, mgetUniProtEntry
 from progressbar import Percentage, Bar, ETA, AdaptiveETA, ProgressBar, UnknownLength, Counter, Timer
 #from progressbar import ProgressBar, Bar, Counter, Timer, ETA, Percentage, RotatingMarker
+
+from ..models.entryProxy import EntrySchema
+
+
+class InsertionError(Exception):
+    pass
+    
+
+
+entryProxyLoader = EntrySchema().load
+
 def bootstrap(**kwargs):
     print("Bootstraping uniprot Entry redis Collection")
     setDatabaseParameters(**kwargs)
@@ -73,11 +84,15 @@ def getSliceIDs(cstart=0, cstop=None):
 
 def add(e):
     """Add a single uniprot entry to the store"""
+    if isinstance(e, dict):
+        e = entryProxyLoader(e)
+
     try :
         storeEntry(e)
     except KeyError as err :
-        print(f"No need to add {e.id} already in store")
-
+        raise InsertionError(f"No need to add {e.id} already in store")
+    
+    return True
 # Proof of concept for deletion
 # Improvment stage 1 : send slice to removeEtnries. current delete decorator is one by one
 # Imorvement stage 2 : use pipeline or scriptiong in redisCLient
@@ -93,7 +108,10 @@ def remove(uniprotIDs=None):
 # Get Object
 # deserialize
 def get(uniprotID, raw=False):
-    _ =  getUniProtEntry(uniprotID)
+    try :
+        _ =  getUniProtEntry(uniprotID)
+    except KeyError:
+        return None
     #print(f"PWEEPWEE {_}")
     return _
 
