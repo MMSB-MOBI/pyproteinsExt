@@ -52,9 +52,47 @@ def startup(xmlUniprot, redis=False, rh=None, rp=None):
     
     app.add_url_rule('/uniprot/put', 'put', put,
                         methods = ['POST'] )
+    
+    app.add_url_rule('/uniprot/put_many', 'put_many', put_many,
+                        methods = ['POST'] )
+
+    app.add_url_rule('/uniprot/wipe', 'wipe', wipe,
+                        methods = ['GET'] )
+
     #app.add_url_rule('/unigo/<taxid>', 'view_unigo', view_unigo)    
 
     return app
+
+def wipe():
+    redisCollection.cleanup()
+    return make_response( 
+        jsonify( { "operation" : "wipe", "results": "success"} )
+    )
+       
+def put_many():
+    global UNIPROT_COLLECTION
+   
+    if not request.is_json:
+        print("Post data not json")
+        abort(422)
+    print('OHOH')
+    data = request.get_json()
+    print(f"Adding stuff log {data}")    
+    ans_status = {
+        "success" : [],
+        "errors"  : []
+    }
+   
+    for e in data["entrySet"]:
+        try :
+            UNIPROT_COLLECTION.add(e)
+            ans_status["success"].append({"id":e["id"]})
+        except Exception as err:
+            print(f"Error in put_many:{err}")
+            ans_status["errors"].append({"id":e["id"], "message" : str(err)})
+            
+    return { "operation" : "put_many", "results": ans_status}, \
+        200
 
 def put():
     global UNIPROT_COLLECTION
@@ -75,7 +113,7 @@ def put():
 def listProtein(interval=':1000'):
     def parseInterval(string): 
         """Parse a slice-like expression"""       
-        m1 = re.match("^([\d]+):{0,1}$", string)
+        m1 = re.match("^:{0,1}([\d]+)$", string)
         if m1:
             return (0, int(m1[1]))
         m2 = re.match("^:([\d]+)$", string)
@@ -86,7 +124,7 @@ def listProtein(interval=':1000'):
             return (int(m3[1]), int(m3[2]))
     
     cstart, cstop = parseInterval(interval)
-
+    #print(interval, "=>", cstart, cstop)
     listIDs = redisCollection.getSliceIDs(cstart, cstop)
     
     return jsonify( {"entryIDs" : listIDs} )
