@@ -1,33 +1,33 @@
 from flask import Flask, jsonify, abort, request, jsonify, make_response
 from pyproteinsext import uniprot as pExt
-from .store import collectionProxy as redisCollection
-from .store.collectionProxy import InsertionError
+from .store import *
+from .store import InsertionError
 import re
 
 
-UNIPROT_COLLECTION=None
+UNIPROT_STORE=None
 # temp hack
 REDIS=False
 
 def cleanup(rh=None, rp=None):
-    redisCollection.bootstrap(host=rh, port=rp)
-    redisCollection.cleanup()
+    store.bootstrap(host=rh, port=rp)
+    store.cleanup()
 
 def startup(xmlUniprot, redis=False, rh=None, rp=None):
 
-    global UNIPROT_COLLECTION, REDIS
-   # UNIPROT_COLLECTION = pExt.EntrySet(collectionXML=xmlUniprot)
+    global UNIPROT_STORE, REDIS
+   # UNIPROT_STORE = pExt.EntrySet(collectionXML=xmlUniprot)
    
     if xmlUniprot:
         print(f"Loading XML ressource {xmlUniprot} ...")
         _ = pExt.EntrySet(collectionXML=xmlUniprot)
-        UNIPROT_COLLECTION = _    
+        UNIPROT_STORE = _    
     if redis:
         REDIS=True
-        redisCollection.bootstrap(host=rh, port=rp)        
+        store.bootstrap(host=rh, port=rp)        
         if xmlUniprot:
-            redisCollection.convert(_)
-        UNIPROT_COLLECTION = redisCollection
+            store.convert(_)
+        UNIPROT_STORE = store
         
     print("Uniprot storage service listening")
  
@@ -64,13 +64,13 @@ def startup(xmlUniprot, redis=False, rh=None, rp=None):
     return app
 
 def wipe():
-    redisCollection.cleanup()
+    store.cleanup()
     return make_response( 
         jsonify( { "operation" : "wipe", "results": "success"} )
     )
        
 def put_many():
-    global UNIPROT_COLLECTION
+    global UNIPROT_STORE
    
     if not request.is_json:
         print("Post data not json")
@@ -85,7 +85,7 @@ def put_many():
    
     for e in data["entrySet"]:
         try :
-            UNIPROT_COLLECTION.add(e)
+            UNIPROT_STORE.add(e)
             ans_status["success"].append({"id":e["id"]})
         except Exception as err:
             print(f"Error in put_many:{err}")
@@ -95,7 +95,7 @@ def put_many():
         200
 
 def put():
-    global UNIPROT_COLLECTION
+    global UNIPROT_STORE
    
     if not request.is_json:
         print("Post data not json")
@@ -104,7 +104,7 @@ def put():
     data = request.get_json()
     print(f"Adding stuff log {data}")    
     try :
-        UNIPROT_COLLECTION.add(data)
+        UNIPROT_STORE.add(data)
     except InsertionError as e:
         return make_response(jsonify( { "error" : str(e)}) , 304)
     
@@ -125,23 +125,23 @@ def listProtein(interval=':1000'):
     
     cstart, cstop = parseInterval(interval)
     #print(interval, "=>", cstart, cstop)
-    listIDs = redisCollection.getSliceIDs(cstart, cstop)
+    listIDs = store.getSliceIDs(cstart, cstop)
     
     return jsonify( {"entryIDs" : listIDs} )
 
 
 def length():
-    global UNIPROT_COLLECTION
+    global UNIPROT_STORE
     if REDIS:
-        length = UNIPROT_COLLECTION.length()
+        length = UNIPROT_STORE.length()
     else:
-        length = len(UNIPROT_COLLECTION)
+        length = len(UNIPROT_STORE)
     print(f"Current Collection size ${length}")
     return jsonify( {"totalEntry" : length} )
 
 def getProtein(uniprotID):
     print(f"Seeking {uniprotID}")
-    oProtein = UNIPROT_COLLECTION.get(uniprotID)
+    oProtein = UNIPROT_STORE.get(uniprotID)
     if not oProtein:
         return make_response( jsonify( { uniprotID : "not found" }), 404 )
     return jsonify( { uniprotID : oProtein.toJSON() } )
@@ -160,12 +160,12 @@ def getProteins():
     # tmp hack
     if not REDIS:
         for id in data['uniprotIDs']:
-            _ = UNIPROT_COLLECTION.get(id)
+            _ = UNIPROT_STORE.get(id)
             results[id] = _.toJSON() if not _ is None else None
             validCnt = validCnt + 1 if results[id] else validCnt
     else:
         print("Fetching many via redis")
-        for e in UNIPROT_COLLECTION.mget(data['uniprotIDs'], raw=False):
+        for e in UNIPROT_STORE.mget(data['uniprotIDs'], raw=False):
             results[e.id] = e.toJSON() if not e is None else None
             validCnt = validCnt + 1 if results[e.id] else validCnt
 

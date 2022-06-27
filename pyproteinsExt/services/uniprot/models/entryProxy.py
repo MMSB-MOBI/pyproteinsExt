@@ -16,7 +16,7 @@ class EntrySchema(Schema):
     id   = fields.Str(validate=isValidID)
     geneName = fields.Str(allow_none=True)
     fullName = fields.Str()
-    taxid    = fields.Str() # Int ?
+    taxid    = fields.Int() 
     GO = fields.List(fields.Nested(GoTermSchema))
     @post_load
     def make_uniprotEntryProxy(self, data, **kwargs):
