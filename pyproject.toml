@@ -7,7 +7,7 @@ license = "BSD"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pyproteins = "^2.0.0"
+pyproteins = {path="../pyproteins", devel=true}
 networkx = "^2.6.3"
 biopython = "^1.79"
 bs4 = "^0.0.1"
