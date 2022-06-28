@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, post_load, INCLUDE
-from ....uniprot import isValidID, GoKW# impoort unirpiotID validator
+from ...uniprot import isValidID, GoKW# impoort unirpiotID validator
 
 class GoTermSchema(Schema):
     id       = fields.Str()
@@ -16,7 +16,7 @@ class EntrySchema(Schema):
     id   = fields.Str(validate=isValidID)
     geneName = fields.Str(allow_none=True)
     fullName = fields.Str()
-    taxid    = fields.Int() 
+    taxid    = fields.Str() # Int ?
     GO = fields.List(fields.Nested(GoTermSchema))
     @post_load
     def make_uniprotEntryProxy(self, data, **kwargs):

@@ -245,20 +245,18 @@ class Entry(pyproteins.container.Core.Container):
     def __init__(self, id, baseUrl="http://www.uniprot.org/uniprot/", fetchable= True, fileName=None, xmlEtreeHandler=None, xmlNS=None):
         if not id:
             raise TypeError('identifier is empty')
-
         super().__init__(id, url=baseUrl + str(id) + '.xml', fileName=fileName)
         #pyproteins.container.Core.Container.__init__(self, id, url=baseUrl + str(id) + '.xml', fileName=fileName)
         
         if not xmlNS is None:
-             self._ns = xmlNS
+            self._ns = xmlNS
 
         if not xmlEtreeHandler is None:
             self.xmlHandler = xmlEtreeHandler
         else:
+            print("Search for", f"{xmlNS}entry")
             self.xmlHandler = self.getXmlHandler(fetchable=fetchable).find(f"{xmlNS}entry")
         
- 
-
         if self.xmlHandler is None:
             return None
         

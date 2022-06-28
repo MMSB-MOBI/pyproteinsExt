@@ -3,19 +3,10 @@ from .redisClient import listUniprotKey, getUniProtEntry,\
     storeManyEntries, mgetUniProtEntry
 from progressbar import Percentage, Bar, ETA, AdaptiveETA, ProgressBar, UnknownLength, Counter, Timer
 #from progressbar import ProgressBar, Bar, Counter, Timer, ETA, Percentage, RotatingMarker
-
-from ..models.entryProxy import EntrySchema
-from .collectionProxy import EntrySetProxy
-
-class InsertionError(Exception):
-    pass
-    
-entryProxyLoader = EntrySchema().load
-
 def bootstrap(**kwargs):
     print("Bootstraping uniprot Entry redis Collection")
     setDatabaseParameters(**kwargs)
-    print(f"{length()} uniprot entries were found in store")
+    print(f"{__len__()} uniprot entries were found in store")
 
 def cleanup(displayCnt=True): 
     cnt = 0
@@ -69,7 +60,7 @@ def convert(entryIterator, bulkSize=250):
 def getSliceIDs(cstart=0, cstop=None):
     cnt = 0
     results = [ ]
-    for e in browser():
+    for e in __iter__():
         if not cstop is None:
             if cnt == cstop:
                 return results
@@ -82,20 +73,16 @@ def getSliceIDs(cstart=0, cstop=None):
 
 def add(e):
     """Add a single uniprot entry to the store"""
-    if isinstance(e, dict):
-        e = entryProxyLoader(e)
-
     try :
         storeEntry(e)
     except KeyError as err :
-        raise InsertionError(f"No need to add {e.id} already in store")
-    
-    return True
+        print(f"No need to add {e.id} already in store")
+
 # Proof of concept for deletion
 # Improvment stage 1 : send slice to removeEtnries. current delete decorator is one by one
 # Imorvement stage 2 : use pipeline or scriptiong in redisCLient
 def remove(uniprotIDs=None):
-    #print(f"Removing {uniprotIDs}")
+    print(f"Removing {uniprotIDs}")
     
     if uniprotIDs: # slow delete all 
         if type(uniprotIDs) == list:        
@@ -106,26 +93,17 @@ def remove(uniprotIDs=None):
 # Get Object
 # deserialize
 def get(uniprotID, raw=False):
-    try :
-        _ =  getUniProtEntry(uniprotID)
-    except KeyError:
-        return None
+    _ =  getUniProtEntry(uniprotID)
+    #print(f"PWEEPWEE {_}")
     return _
 
 def mget(uniprotIDs, raw=False):
     _ =  mgetUniProtEntry(uniprotIDs, raw=raw)
     return _
 
-def get_collection_taxid(taxid:int):
-    """
-    Returns the list of ProxyEntry matching provided taxid
-    """
-    return EntrySetProxy([ e for e in browser() if e.taxid == taxid ])
-
-def browser(chunckSize = 250):
-    """
-    Base iteration over all stored entries
-    """
+# Not sure its possible at module level
+def __iter__():
+    chunckSize = 250
     _ = []
     cnt = 0
     for _id in listUniprotKey():
@@ -139,6 +117,14 @@ def browser(chunckSize = 250):
         for e in mget(_):
             yield e 
     print(f"Completed total {cnt} iterations")
+
+# Not possible at module level
+# TypeError: object of type 'module' has no len()
+def __len__():
+    cnt = 0
+    for _id in listUniprotKey(): 
+        cnt += 1
+    return cnt
 
 def length():
     cnt = 0
