@@ -118,13 +118,16 @@ class EntrySet(pyproteins.container.customCollection.EntrySet):
         cachePath = home     
         self.isXMLCollection = False
         self.isRedisCollection = False
-        if 'collectionXML' in kwargs:
+        if 'streamXML' or 'collectionXML' in kwargs:
             self.isXMLCollection = True
-            if kwargs['collectionXML'].endswith('.gz'):
-                with gzip.open(kwargs['collectionXML'], 'r') as gz:
-                    self.etree = parse(gz)
-            else:
-                self.etree = parse(kwargs['collectionXML'])
+            if 'streamXML' in kwargs:
+                self.etree = parse(kwargs['streamXML'])
+            elif 'collectionXML' in kwargs:
+                if kwargs['collectionXML'].endswith('.gz'):
+                    with gzip.open(kwargs['collectionXML'], 'r') as gz:
+                        self.etree = parse(gz)
+                else:
+                    self.etree = parse(kwargs['collectionXML'])
 
             self.etree_root = self.etree.getroot()
             self.index = None
