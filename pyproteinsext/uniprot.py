@@ -285,6 +285,7 @@ class Entry(pyproteins.container.Core.Container):
         self.parseKW()
         self.parseGO()
         self.parseSequence()
+        self.parse_subcellular_location()
 
 
 # Following oarsing stages are disabled since we got rid of bs4
@@ -438,6 +439,31 @@ class Entry(pyproteins.container.Core.Container):
             if e_gene_id["id"] not in GeneID:
                 GeneID.append(e_gene_id["id"])
         return GeneID
+
+    def parse_subcellular_location(self):
+        self.subcellular_location = []
+        for citation in self._xmlFindAll('comment', type="subcellular location"):
+            for sl in self._xmlFindAll('subcellularLocation', elem = citation):
+                for location in self._xmlFindAll('location', elem = sl):
+                    self.subcellular_location.append(location.text)
+        # except : 
+        #     print("WARNING", self.AC, "subcellular location can't be parsed")
+        #     print(citation, sl, location)
+
+        # self.subcellular_location = []
+        # citations = self._xmlFindAll("comment", type="subcellular location")
+        # for citation in citations:
+        #     annotation = self._xmlFind('subcellularLocation/location', elem=citation)
+           
+
+        #     # if not annotation:
+        #     #     print("no annotation", self.AC, annotation)
+        #     # else:
+        #     try:
+        #         self.subcellular_location.append(annotation.text)
+        #     except:
+        #         print("WARNING", self.AC, "subcellular location can't be parsed")
+        #         self.subcellular_location = ['WARNING']
         
     def get_xref(self):
         # print("GET XREF")
