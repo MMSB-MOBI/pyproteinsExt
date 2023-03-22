@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyproteinsext"
-version = "3.1.0"
+version = "3.1.1"
 description = "'Extending pyproteins for bioinformatics tools&services'"
 authors = ["glaunay <pitooon@gmail.com>"]
 license = "BSD"
