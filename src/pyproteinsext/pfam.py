@@ -5,7 +5,7 @@ import re
 ''' Collection of Pfam entries '''
 
 def strip(fileName):
-    string = re.sub("\.[^\.]+$", "", fileName)
+    string = re.sub(r'\.[^\.]+$', "", fileName)
     return string
 
 class EntrySet(pyproteins.container.customCollection.EntrySet, object):
@@ -39,7 +39,7 @@ class Entry(pyproteins.container.Core.Container):
         if not e.find('description'):
             raise ValueError("not a valid Pfam ressource")
 
-        self.description = re.sub("^[\n\s]*([\S]+.*[\S]+)[\n\s]*$",r"\1", e.find("description").text)
+        self.description = re.sub(r'^[\n\s]*([\S]+.*[\S]+)[\n\s]*$',r'\1', e.find("description").text)
 
         self.matches = [ Match(x) for x in e.find_all('match') ]
 

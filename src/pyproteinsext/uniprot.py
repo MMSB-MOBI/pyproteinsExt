@@ -271,9 +271,18 @@ class Entry(pyproteins.container.Core.Container):
             self.fullName = self.name
         
         self.geneName =  None
+        self.orderedLocus = None
         e = self._xmlFind("gene")
         if not e is None:
-           self.geneName = self._xmlFind("./name", elem=e).text
+           primary = self._xmlFind("./name", elem=e, type="primary")
+           # fall back to the first name child when no primary-typed name exists
+           if primary is None:
+               primary = self._xmlFind("./name", elem=e)
+           if primary is not None:
+               self.geneName = primary.text
+           ol = self._xmlFind("./name", elem=e, type="ordered locus")
+           if ol is not None:
+               self.orderedLocus = ol.text
 
         self.STRING_ID = None
         e = self._xmlFind("./dbReference", type="STRING")
@@ -286,7 +295,9 @@ class Entry(pyproteins.container.Core.Container):
         self.parseGO()
         self.parseSequence()
         self.parse_subcellular_location()
-
+        # adding dataset
+        e = self._xmlFind("./")
+        self.dataset =  self._xmlAttrib('dataset', elem=e)
 
 # Following oarsing stages are disabled since we got rid of bs4
 # Need to port them  to lxml, making use of xpath syntax
